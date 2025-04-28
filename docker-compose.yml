@@ -1,0 +1,26 @@
+# docker-compose.yml
+
+version: '3.8'
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: specstack
+      POSTGRES_PASSWORD: specstack
+      POSTGRES_DB: specstack
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db:/docker-entrypoint-initdb.d
+
+  postgrest:
+    image: postgrest/postgrest
+    environment:
+      PGRST_DB_URI: postgres://specstack:specstack@db/specstack
+      PGRST_DB_ANON_ROLE: web_anon
+      PGRST_JWT_SECRET: mysecret
+      PGRST_DB_SCHEMA: public
+    ports:
+      - "3001:3000"
+    depends_on:
+      - db

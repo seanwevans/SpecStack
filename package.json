@@ -1,0 +1,24 @@
+{
+  "name": "specstack",
+  "version": "0.1.0",
+  "description": "OpenAPI to Postgres + React generator",
+  "main": "cli/generate.ts",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx cli/generate.ts ./tests/petstore.yaml",
+    "build": "tsc",
+    "start": "node dist/cli/generate.js"
+  },
+  "bin": {
+    "specstack": "./dist/cli/generate.js"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.4.0",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.19.3",
+    "typescript": "^5.4.0"
+  }
+}
