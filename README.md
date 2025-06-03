@@ -57,6 +57,7 @@ npm install
 ```bash
 npm run dev <path/to/your/openAPI/spec.yaml>
 ```
+For a quick test, run with the sample spec at `tests/petstore.yaml`.
 
 Optional: specify output directory
 
