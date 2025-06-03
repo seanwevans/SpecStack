@@ -8,8 +8,11 @@
     "outDir": "dist",
     "rootDir": ".",
     "strict": true,
+    "types": ["node"],
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true
   },
   "include": [
     "cli",
