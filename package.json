@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "tsx cli/generate.ts ./tests/petstore.yaml",
     "build": "tsc",
-    "start": "node dist/cli/generate.js"
+    "start": "node dist/cli/generate.js",
+    "test": "jest"
   },
   "bin": {
     "specstack": "./dist/cli/generate.js"
@@ -16,7 +17,11 @@
     "js-yaml": "^4.1.0"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.4.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.3.4",
     "ts-node": "^10.9.2",
     "tsx": "^4.19.3",
     "typescript": "^5.4.0"
