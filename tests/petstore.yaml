@@ -1,5 +1,6 @@
 openapi: 3.0.0
 info:
+
   title: Petstore
   version: 1.0.0
 paths:
@@ -35,13 +36,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Pet'
+
 components:
   schemas:
     Pet:
       type: object
+
       required:
         - id
         - name
+
       properties:
         id:
           type: integer
