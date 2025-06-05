@@ -39,4 +39,9 @@ describe('parseOpenAPI', () => {
       responseBodyType: 'Pet',
     });
   });
+
+  test('throws a clear error when file is missing', () => {
+    const badPath = path.join(__dirname, 'missing_file.yaml');
+    expect(() => parseOpenAPI(badPath)).toThrowError('OpenAPI file not found');
+  });
 });

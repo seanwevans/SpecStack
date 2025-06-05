@@ -12,6 +12,10 @@ import path from 'path';
 export function parseOpenAPI(filePath: string): SpecIR {
   console.log(`Parsing OpenAPI spec from: ${filePath}`);
 
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`OpenAPI file not found: ${filePath}`);
+  }
+
   const fileContent = fs.readFileSync(filePath, 'utf-8');
   const openapiDoc = yaml.load(fileContent) as any;
 
