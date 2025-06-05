@@ -1,6 +1,6 @@
 // transformer/db_transformer.ts
 
-import { TableSpec, FunctionSpec, ColumnSpec } from '../types/specir.ts';
+import { TableSpec, FunctionSpec, ColumnSpec } from '../types/specir.js';
 
 /**
  * Generates a full CREATE TABLE SQL statement from a TableSpec.

@@ -1,6 +1,6 @@
 // parser/openapi_parser.ts
 
-import { SpecIR, TableSpec, ColumnSpec, FunctionSpec, ParamSpec } from '../types/specir.ts';
+import { SpecIR, TableSpec, ColumnSpec, FunctionSpec, ParamSpec } from '../types/specir.js';
 import fs from 'fs';
 import yaml from 'js-yaml';
 import path from 'path';
