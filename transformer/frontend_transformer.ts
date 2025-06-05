@@ -1,6 +1,6 @@
 // transformer/frontend_transformer.ts
 
-import { FunctionSpec } from '../types/specir.ts';
+import { FunctionSpec } from '../types/specir.js';
 
 /**
  * Generates a React Query hook for a given API function.
