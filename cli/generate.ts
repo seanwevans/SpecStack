@@ -1,9 +1,9 @@
 // cli/generate.ts
 
-import { parseOpenAPI } from '../parser/openapi_parser.ts';
-import { generateCreateTableSQL, generateCreateFunctionSQL } from '../transformer/db_transformer.ts';
-import { generateUseHook } from '../transformer/frontend_transformer.ts';
-import { writeToFile } from '../generator/file_writer.ts';
+import { parseOpenAPI } from '../parser/openapi_parser.js';
+import { generateCreateTableSQL, generateCreateFunctionSQL } from '../transformer/db_transformer.js';
+import { generateUseHook } from '../transformer/frontend_transformer.js';
+import { writeToFile } from '../generator/file_writer.js';
 import { join } from 'path';
 
 const args = process.argv.slice(2);
