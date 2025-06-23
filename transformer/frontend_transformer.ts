@@ -23,7 +23,8 @@ export function generateUseHook(func: FunctionSpec): string {
 
   const queryFn = func.method === 'GET'
     ? `async (${needsParams ? '{ params }' : ''}) => {
-    const query = new URLSearchParams(${queryParams.length > 0 ? 'params' : '{}'}).toString();
+    const queryParamsObj = ${queryParams.length > 0 ? `{ ${queryParams.map(p => `${p.name}: params.${p.name}`).join(', ')} }` : '{}'};
+    const query = new URLSearchParams(queryParamsObj).toString();
     const response = await fetch(\`${urlPath}\${query ? '?' + query : ''}\`);
     return response.json();
   }`
