@@ -65,6 +65,13 @@ Optional: specify output directory
 npm run dev <path/to/your/openAPI/spec.yaml> ./custom_output_dir
 ```
 
+Running the command above will create React Query hooks under `generated/frontend/src/hooks`.
+Import these hooks in your React components (e.g., `useGetPetById`) after generation:
+
+```ts
+import { useGetPetById } from '../generated/frontend/src/hooks';
+```
+
 ---
 
 ## 🛠️ How It Works
