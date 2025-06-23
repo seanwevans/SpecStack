@@ -26,6 +26,3 @@ dist-ssr
 
 # misc
 *.txt
-
-tests/*
-!tests/petstore.yaml
