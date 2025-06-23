@@ -5,7 +5,7 @@
   "main": "cli/generate.ts",
   "type": "module",
   "scripts": {
-    "dev": "tsx cli/generate.ts ./tests/petstore.yaml",
+    "dev": "tsx cli/generate.ts",
     "build": "tsc",
     "start": "node dist/cli/generate.js",
     "test": "jest"
