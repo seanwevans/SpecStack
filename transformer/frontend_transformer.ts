@@ -16,18 +16,18 @@ export function generateUseHook(func: FunctionSpec): string {
   const paramsInterface = needsParams ? `params: {
     ${urlParams.map(p => `${p.name}: ${mapTypeToTS(p.type)}`).join(';\n    ')}
     ${queryParams.map(p => `${p.name}?: ${mapTypeToTS(p.type)}`).join(';\n    ')}
-    ${func.requestBodyType ? `body: ${func.requestBodyType}` : ''}
+    ${func.requestBodyType ? `body: any` : ''}
   }` : '';
 
   const urlPath = buildUrlTemplate(func.path, urlParams);
 
   const queryFn = func.method === 'GET'
-    ? `async (${needsParams ? '{ params }' : ''}) => {
+    ? `async () => {
     const query = new URLSearchParams(${queryParams.length > 0 ? 'params' : '{}'}).toString();
     const response = await fetch(\`${urlPath}\${query ? '?' + query : ''}\`);
     return response.json();
   }`
-    : `async (${needsParams ? '{ params }' : ''}) => {
+    : `async () => {
     const response = await fetch(\`${urlPath}\`, {
       method: '${func.method}',
       headers: { 'Content-Type': 'application/json' },
@@ -42,8 +42,8 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 export function ${hookName}(${needsParams ? paramsInterface : ''}) {
   return ${
     func.method === 'GET'
-      ? `useQuery(['${queryKey}'], ${queryFn})`
-      : `useMutation(${queryFn})`
+      ? `useQuery({ queryKey: ['${queryKey}'], queryFn: ${queryFn} })`
+      : `useMutation({ mutationFn: ${queryFn} })`
   };
 }
 `.trim();
