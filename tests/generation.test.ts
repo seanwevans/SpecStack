@@ -56,7 +56,7 @@ $$;`);
   test('generateUseHook', () => {
     const hook = generateUseHook(func);
     expect(hook).toContain("useGetPetById");
-    expect(hook).toContain("useQuery(['getPetById']");
+    expect(hook).toContain("useQuery({ queryKey: ['getPetById']");
     expect(hook).toContain("fetch(`/pets/${params.id}");
   });
 
