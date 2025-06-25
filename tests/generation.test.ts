@@ -21,6 +21,18 @@ describe('generation functions', () => {
     responseBodyType: 'Pet',
   };
 
+  const funcWithQuery: FunctionSpec = {
+    name: 'searchPets',
+    method: 'GET',
+    path: '/pets',
+    params: [
+      { name: 'tag', in: 'query', required: false, type: 'string' },
+      { name: 'limit', in: 'query', required: false, type: 'integer' },
+    ],
+    requestBodyType: undefined,
+    responseBodyType: 'Pet[]',
+  };
+
   test('generateCreateTableSQL', () => {
     const sql = generateCreateTableSQL(table);
     expect(sql).toBe(`CREATE TABLE IF NOT EXISTS Pet (
@@ -46,5 +58,11 @@ $$;`);
     expect(hook).toContain("useGetPetById");
     expect(hook).toContain("useQuery({ queryKey: ['getPetById']");
     expect(hook).toContain("fetch(`/pets/${params.id}");
+  });
+
+  test('generateUseHook with query params', () => {
+    const hook = generateUseHook(funcWithQuery);
+    expect(hook).toContain('const queryParamsObj = { tag: params.tag, limit: params.limit }');
+    expect(hook).toContain('new URLSearchParams(queryParamsObj)');
   });
 });

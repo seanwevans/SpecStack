@@ -57,12 +57,19 @@ npm install
 ```bash
 npm run dev <path/to/your/openAPI/spec.yaml>
 ```
-For a quick test, run with the sample spec at `tests/petstore.yaml`.
+For a quick test, run `npm run dev ./tests/petstore.yaml`.
 
 Optional: specify output directory
 
 ```bash
 npm run dev <path/to/your/openAPI/spec.yaml> ./custom_output_dir
+```
+
+Running the command above will create React Query hooks under `generated/frontend/src/hooks`.
+Import these hooks in your React components (e.g., `useGetPetById`) after generation:
+
+```ts
+import { useGetPetById } from '../generated/frontend/src/hooks';
 ```
 
 ---
