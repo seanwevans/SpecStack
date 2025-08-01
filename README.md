@@ -23,27 +23,6 @@
 
 ---
 
-## 📦 Project Structure
-
-```bash
-specstack/
-├── cli/                  # CLI entrypoint
-├── core/                 # (reserved for libraries)
-├── db/                   # Static DB schemas
-├── docker-compose.yml    # Optional local DB setup
-├── frontend/             # Frontend auto-gen output
-├── generator/            # File writers
-├── parser/               # OpenAPI -> SpecIR parser
-├── transformer/          # SpecIR -> SQL / Hooks
-├── types/                # SpecIR definitions
-├── tests/                # Test specs
-├── package.json
-├── tsconfig.json
-└── README.md
-```
-
----
-
 ## ⚡ Quick Start
 
 ### 1. Install Dependencies
