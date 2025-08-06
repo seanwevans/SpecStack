@@ -38,6 +38,26 @@ describe('parseOpenAPI', () => {
       requestBodyType: 'Pet',
       responseBodyType: 'Pet',
     });
+
+    expect(spec.functions).toContainEqual({
+      name: 'createPet201',
+      method: 'POST',
+      path: '/pets-creation',
+      params: [],
+      requestBodyType: 'Pet',
+      responseBodyType: 'Pet',
+    });
+
+    expect(spec.functions).toContainEqual({
+      name: 'deletePet',
+      method: 'DELETE',
+      path: '/pets/{id}',
+      params: [
+        { name: 'id', in: 'path', required: true, type: 'integer' },
+      ],
+      requestBodyType: undefined,
+      responseBodyType: undefined,
+    });
   });
 
   test('throws a clear error when file is missing', () => {
