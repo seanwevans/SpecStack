@@ -1,0 +1,33 @@
+openapi: 3.0.0
+info:
+  title: Complex
+  version: "1.0"
+components:
+  schemas:
+    Complex:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+        tags:
+          type: array
+          items:
+            type: string
+        attributes:
+          type: object
+          properties:
+            color:
+              type: string
+            size:
+              type: number
+        nested:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              count:
+                type: integer

@@ -62,7 +62,7 @@ $$;`);
 
   test('generateUseHook with query params', () => {
     const hook = generateUseHook(funcWithQuery);
-    expect(hook).toContain('const queryParamsObj = { tag: params.tag, limit: params.limit }');
-    expect(hook).toContain('new URLSearchParams(queryParamsObj)');
+    expect(hook).toContain('const query = new URLSearchParams(params).toString();');
+    expect(hook).toContain("fetch(`/pets${query ? '?' + query : ''}`)");
   });
 });

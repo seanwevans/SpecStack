@@ -113,6 +113,13 @@ function parseOperationToFunction(method: string, path: string, operation: any):
  * Maps OpenAPI primitive types to rough SQL types.
  */
 function mapOpenAPITypeToSQLType(propSchema: any): string {
+  if (!propSchema) return 'TEXT';
+
+  // Handle referenced schemas as generic JSON objects
+  if (propSchema.$ref) {
+    return 'JSONB';
+  }
+
   switch (propSchema.type) {
     case 'integer':
       return 'INTEGER';
@@ -123,6 +130,12 @@ function mapOpenAPITypeToSQLType(propSchema: any): string {
     case 'string':
       if (propSchema.format === 'date-time') return 'TIMESTAMP';
       return 'VARCHAR';
+    case 'array': {
+      const itemType = mapOpenAPITypeToSQLType(propSchema.items);
+      return `${itemType}[]`;
+    }
+    case 'object':
+      return 'JSONB';
     default:
       return 'TEXT';
   }
