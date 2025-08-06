@@ -62,6 +62,8 @@ $$;`);
 
   test('generateUseHook with query params', () => {
     const hook = generateUseHook(funcWithQuery);
+    expect(hook).toContain('const query = new URLSearchParams(params).toString();');
+    expect(hook).toContain("fetch(`/pets${query ? '?' + query : ''}`)");
     expect(hook).toContain('new URLSearchParams(params)');
   });
 });

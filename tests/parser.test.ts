@@ -65,3 +65,22 @@ describe('parseOpenAPI', () => {
     expect(() => parseOpenAPI(badPath)).toThrowError('OpenAPI file not found');
   });
 });
+
+describe('parseOpenAPI with complex schemas', () => {
+  const specPath = path.join(__dirname, 'complex.yaml');
+  const spec = parseOpenAPI(specPath);
+
+  test('handles array and object types', () => {
+    expect(spec.tables).toEqual([
+      {
+        name: 'Complex',
+        columns: [
+          { name: 'id', type: 'INTEGER', nullable: false, primaryKey: true },
+          { name: 'tags', type: 'VARCHAR[]', nullable: true, primaryKey: false },
+          { name: 'attributes', type: 'JSONB', nullable: true, primaryKey: false },
+          { name: 'nested', type: 'JSONB[]', nullable: true, primaryKey: false },
+        ],
+      },
+    ]);
+  });
+});
