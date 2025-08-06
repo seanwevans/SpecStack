@@ -33,14 +33,52 @@ export function generateCreateFunctionSQL(func: FunctionSpec): string {
   const paramList = func.params.map(p => `${p.name} ${mapTypeToSQL(p.type)}`).join(', ');
   const returnType = func.responseBodyType ? mapTypeToSQL(func.responseBodyType) : 'VOID';
 
+  const tableName = getTableNameFromFunc(func);
+  const bodySQL = generateFunctionBodySQL(func, tableName);
+
   return `
 CREATE OR REPLACE FUNCTION ${func.name}(${paramList})
 RETURNS ${returnType}
 LANGUAGE sql
 AS $$
-  -- TODO: Implement SQL body for ${func.name}
-  SELECT 1;
+  ${bodySQL}
 $$;`.trim();
+}
+
+/**
+ * Determine table name from the function specification.
+ */
+function getTableNameFromFunc(func: FunctionSpec): string {
+  const typeName = func.method === 'GET' ? func.responseBodyType : func.requestBodyType;
+  if (typeName) {
+    return typeName.replace(/\[\]$/, '');
+  }
+  return func.name;
+}
+
+/**
+ * Generate the SQL body for the function based on method and params.
+ */
+function generateFunctionBodySQL(func: FunctionSpec, tableName: string): string {
+  const paramNames = func.params.map(p => p.name);
+  switch (func.method) {
+    case 'GET': {
+      const whereClause = paramNames.length
+        ? ' WHERE ' + paramNames.map(name => `${name} = ${name}`).join(' AND ')
+        : '';
+      return `SELECT * FROM ${tableName}${whereClause};`;
+    }
+    case 'POST': {
+      if (paramNames.length) {
+        const columns = paramNames.join(', ');
+        const values = paramNames.join(', ');
+        return `INSERT INTO ${tableName} (${columns}) VALUES (${values})${func.responseBodyType ? ' RETURNING *' : ''};`;
+      }
+      return `INSERT INTO ${tableName} DEFAULT VALUES${func.responseBodyType ? ' RETURNING *' : ''};`;
+    }
+    default:
+      return `-- TODO: Implement SQL body for ${func.name}`;
+  }
 }
 
 /**

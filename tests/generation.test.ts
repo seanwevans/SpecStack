@@ -21,6 +21,18 @@ describe('generation functions', () => {
     responseBodyType: 'Pet',
   };
 
+  const createFunc: FunctionSpec = {
+    name: 'createPet',
+    method: 'POST',
+    path: '/pets',
+    params: [
+      { name: 'id', in: 'query', required: true, type: 'integer' },
+      { name: 'name', in: 'query', required: true, type: 'string' },
+    ],
+    requestBodyType: 'Pet',
+    responseBodyType: 'Pet',
+  };
+
   const funcWithQuery: FunctionSpec = {
     name: 'searchPets',
     method: 'GET',
@@ -42,15 +54,16 @@ describe('generation functions', () => {
 );`);
   });
 
-  test('generateCreateFunctionSQL', () => {
+  test('generateCreateFunctionSQL for GET', () => {
     const sql = generateCreateFunctionSQL(func);
-    expect(sql).toBe(`CREATE OR REPLACE FUNCTION getPetById(id INTEGER)
-RETURNS TEXT
-LANGUAGE sql
-AS $$
-  -- TODO: Implement SQL body for getPetById
-  SELECT 1;
-$$;`);
+    expect(sql).toContain('SELECT * FROM Pet');
+    expect(sql).toContain('WHERE id = id');
+  });
+
+  test('generateCreateFunctionSQL for POST', () => {
+    const sql = generateCreateFunctionSQL(createFunc);
+    expect(sql).toContain('INSERT INTO Pet (id, name) VALUES (id, name)');
+    expect(sql).toContain('RETURNING *');
   });
 
   test('generateUseHook', () => {
@@ -62,7 +75,7 @@ $$;`);
 
   test('generateUseHook with query params', () => {
     const hook = generateUseHook(funcWithQuery);
-    expect(hook).toContain('const queryParamsObj = { tag: params.tag, limit: params.limit }');
-    expect(hook).toContain('new URLSearchParams(queryParamsObj)');
+    expect(hook).toContain('new URLSearchParams(params).toString()');
+    expect(hook).toContain("fetch(`/pets${query ? '?' + query : ''}`)");
   });
 });
