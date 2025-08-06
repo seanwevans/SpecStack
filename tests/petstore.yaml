@@ -20,6 +20,17 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Pet'
+    delete:
+      operationId: deletePet
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: No Content
   /pets:
     post:
       operationId: createPet
@@ -31,6 +42,24 @@ paths:
               $ref: '#/components/schemas/Pet'
       responses:
         '200':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'
+  /pets-creation:
+    post:
+      operationId: createPet201
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pet'
+      responses:
+        '200':
+          description: OK
+        '201':
           description: Created
           content:
             application/json:

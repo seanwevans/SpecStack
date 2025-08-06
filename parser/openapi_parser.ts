@@ -1,9 +1,10 @@
 // parser/openapi_parser.ts
 
-import { SpecIR, TableSpec, ColumnSpec, FunctionSpec, ParamSpec } from '../types/specir.js';
+import { SpecIR, TableSpec, ColumnSpec, FunctionSpec, ParamSpec, HttpMethod } from '../types/specir.js';
 import fs from 'fs';
 import yaml from 'js-yaml';
 import path from 'path';
+import { OpenAPIV3 } from 'openapi-types';
 
 /**
  * Parses an OpenAPI YAML or JSON file into a SpecIR intermediate model.
@@ -17,7 +18,7 @@ export function parseOpenAPI(filePath: string): SpecIR {
   }
 
   const fileContent = fs.readFileSync(filePath, 'utf-8');
-  const openapiDoc = yaml.load(fileContent) as any;
+  const openapiDoc = yaml.load(fileContent) as OpenAPIV3.Document;
 
   if (!openapiDoc || typeof openapiDoc !== 'object') {
     throw new Error('Invalid OpenAPI document');
@@ -28,7 +29,7 @@ export function parseOpenAPI(filePath: string): SpecIR {
 
   // --- Parse Components/Schemas into tables ---
   if (openapiDoc.components?.schemas) {
-    for (const [schemaName, schema] of Object.entries<any>(openapiDoc.components.schemas)) {
+    for (const [schemaName, schema] of Object.entries(openapiDoc.components.schemas as Record<string, OpenAPIV3.SchemaObject>)) {
       const table = parseSchemaToTable(schemaName, schema);
       tables.push(table);
     }
@@ -36,10 +37,10 @@ export function parseOpenAPI(filePath: string): SpecIR {
 
   // --- Parse Paths into functions ---
   if (openapiDoc.paths) {
-    for (const [pathKey, pathItem] of Object.entries<any>(openapiDoc.paths)) {
-      for (const method of ['get', 'post', 'put', 'patch', 'delete']) {
-        if (pathItem[method]) {
-          const operation = pathItem[method];
+    for (const [pathKey, pathItem] of Object.entries(openapiDoc.paths as Record<string, OpenAPIV3.PathItemObject>)) {
+      for (const method of ['get', 'post', 'put', 'patch', 'delete'] as const) {
+        const operation = pathItem[method];
+        if (operation) {
           const func = parseOperationToFunction(method.toUpperCase(), pathKey, operation);
           functions.push(func);
         }
@@ -53,12 +54,13 @@ export function parseOpenAPI(filePath: string): SpecIR {
 /**
  * Converts an OpenAPI schema into a TableSpec.
  */
-function parseSchemaToTable(name: string, schema: any): TableSpec {
+function parseSchemaToTable(name: string, schema: OpenAPIV3.SchemaObject): TableSpec {
   const columns: ColumnSpec[] = [];
 
-  const requiredFields: string[] = schema.required || [];
+  const requiredFields: string[] = (schema.required as string[]) || [];
 
-  for (const [propName, propSchema] of Object.entries<any>(schema.properties || {})) {
+  const properties = schema.properties as Record<string, OpenAPIV3.SchemaObject> | undefined;
+  for (const [propName, propSchema] of Object.entries(properties || {})) {
     columns.push({
       name: propName,
       type: mapOpenAPITypeToSQLType(propSchema),
@@ -73,35 +75,49 @@ function parseSchemaToTable(name: string, schema: any): TableSpec {
 /**
  * Converts an OpenAPI operation into a FunctionSpec.
  */
-function parseOperationToFunction(method: string, path: string, operation: any): FunctionSpec {
+function parseOperationToFunction(method: string, path: string, operation: OpenAPIV3.OperationObject): FunctionSpec {
   const params: ParamSpec[] = [];
 
   if (operation.parameters) {
-    for (const param of operation.parameters) {
+    for (const param of operation.parameters as (OpenAPIV3.ParameterObject | OpenAPIV3.ReferenceObject)[]) {
+      if ('$ref' in param) continue;
       params.push({
         name: param.name,
-        in: param.in,
+        in: param.in as ParamSpec['in'],
         required: !!param.required,
-        type: param.schema?.type || 'string'
+        type: (param.schema as OpenAPIV3.SchemaObject | undefined)?.type || 'string'
       });
     }
   }
 
   // Guess request and response types
   let requestBodyType: string | undefined;
-  if (operation.requestBody?.content?.['application/json']?.schema?.$ref) {
-    requestBodyType = extractRefName(operation.requestBody.content['application/json'].schema.$ref);
+  const requestBody = operation.requestBody as OpenAPIV3.RequestBodyObject | undefined;
+  const reqSchema = requestBody?.content?.['application/json']?.schema;
+  if (reqSchema && '$ref' in reqSchema) {
+    requestBodyType = extractRefName(reqSchema.$ref);
   }
 
   let responseBodyType: string | undefined;
-  const responses = operation.responses;
-  if (responses?.['200']?.content?.['application/json']?.schema?.$ref) {
-    responseBodyType = extractRefName(responses['200'].content['application/json'].schema.$ref);
+  const responses = operation.responses as OpenAPIV3.ResponsesObject | undefined;
+  if (responses) {
+    const statusCodes = Object.keys(responses)
+      .filter(code => /^2\d\d$/.test(code))
+      .sort();
+    for (const code of statusCodes) {
+      const response = responses[code] as OpenAPIV3.ResponseObject | OpenAPIV3.ReferenceObject;
+      if ('$ref' in response) continue;
+      const schema = response.content?.['application/json']?.schema;
+      if (schema && '$ref' in schema) {
+        responseBodyType = extractRefName(schema.$ref);
+        break;
+      }
+    }
   }
 
   return {
     name: operation.operationId || generateFunctionName(method, path),
-    method: method as any,
+    method: method as HttpMethod,
     path,
     params,
     requestBodyType,
