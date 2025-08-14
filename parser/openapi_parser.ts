@@ -18,7 +18,12 @@ export function parseOpenAPI(filePath: string): SpecIR {
   }
 
   const fileContent = fs.readFileSync(filePath, 'utf-8');
-  const openapiDoc = yaml.load(fileContent) as OpenAPIV3.Document;
+  let openapiDoc: OpenAPIV3.Document;
+  try {
+    openapiDoc = yaml.load(fileContent) as OpenAPIV3.Document;
+  } catch (err: any) {
+    throw new Error('Failed to parse OpenAPI file: ' + err.message);
+  }
 
   if (!openapiDoc || typeof openapiDoc !== 'object') {
     throw new Error('Invalid OpenAPI document');
