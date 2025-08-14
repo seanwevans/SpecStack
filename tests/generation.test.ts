@@ -68,15 +68,27 @@ describe('generation functions', () => {
 
   test('generateUseHook', () => {
     const hook = generateUseHook(func);
-    expect(hook).toContain("useGetPetById");
+    expect(hook).toContain("import { useQuery } from '@tanstack/react-query';");
+    expect(hook).not.toContain('useMutation');
+    expect(hook).toContain('useGetPetById');
     expect(hook).toContain("useQuery({ queryKey: ['getPetById']");
-    expect(hook).toContain("fetch(`/pets/${params.id}");
+    expect(hook).toContain("fetch(`/pets/${params.id}${query ? '?' + query : ''}`);");
   });
 
   test('generateUseHook with query params', () => {
     const hook = generateUseHook(funcWithQuery);
-    expect(hook).toContain('new URLSearchParams(params).toString()');
-    expect(hook).toContain("fetch(`/pets${query ? '?' + query : ''}`)");
-    expect(hook).toContain('const query = new URLSearchParams(params).toString();');
+    expect(hook).toContain("import { useQuery } from '@tanstack/react-query';");
+    expect(hook).not.toContain('useMutation');
+    expect(hook).toContain('const queryParamsObj = { tag: params.tag, limit: params.limit };');
+    expect(hook).toContain('const query = new URLSearchParams(queryParamsObj).toString();');
+    expect(hook).toContain("fetch(`/pets${query ? '?' + query : ''}`);");
+  });
+
+  test('generateUseHook for mutation', () => {
+    const hook = generateUseHook(createFunc);
+    expect(hook).toContain("import { useMutation } from '@tanstack/react-query';");
+    expect(hook).not.toContain('useQuery');
+    expect(hook).toContain('useMutation({ mutationFn:');
+    expect(hook).toContain("method: 'POST'");
   });
 });
