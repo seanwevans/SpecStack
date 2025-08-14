@@ -76,6 +76,23 @@ function generateFunctionBodySQL(func: FunctionSpec, tableName: string): string 
       }
       return `INSERT INTO ${tableName} DEFAULT VALUES${func.responseBodyType ? ' RETURNING *' : ''};`;
     }
+    case 'PUT':
+    case 'PATCH': {
+      if (paramNames.length) {
+        const [idParam, ...rest] = paramNames;
+        if (rest.length) {
+          const setClause = rest.map(name => `${name} = ${name}`).join(', ');
+          return `UPDATE ${tableName} SET ${setClause} WHERE ${idParam} = ${idParam}${func.responseBodyType ? ' RETURNING *' : ''};`;
+        }
+      }
+      return `-- TODO: Implement SQL body for ${func.name}`;
+    }
+    case 'DELETE': {
+      const whereClause = paramNames.length
+        ? ' WHERE ' + paramNames.map(name => `${name} = ${name}`).join(' AND ')
+        : '';
+      return `DELETE FROM ${tableName}${whereClause}${func.responseBodyType ? ' RETURNING *' : ''};`;
+    }
     default:
       return `-- TODO: Implement SQL body for ${func.name}`;
   }
