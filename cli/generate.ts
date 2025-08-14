@@ -16,41 +16,46 @@ if (args.length < 1) {
 const openapiPath = args[0];
 const outputBase = args[1] || './generated'; // optional second argument
 
-console.log(`Parsing OpenAPI spec from ${openapiPath}...`);
+try {
+  console.log(`Parsing OpenAPI spec from ${openapiPath}...`);
 
-const spec = parseOpenAPI(openapiPath);
+  const spec = parseOpenAPI(openapiPath);
 
-const dbOut = join(outputBase, 'db');
-const frontendOut = join(outputBase, 'frontend/src/hooks');
+  const dbOut = join(outputBase, 'db');
+  const frontendOut = join(outputBase, 'frontend/src/hooks');
 
-console.log('Generating DB schema and functions...');
-for (const table of spec.tables) {
-  const sql = generateCreateTableSQL(table);
-  await writeToFile(join(dbOut, `${table.name}_table.sql`), sql + '\n');
+  console.log('Generating DB schema and functions...');
+  for (const table of spec.tables) {
+    const sql = generateCreateTableSQL(table);
+    writeToFile(join(dbOut, `${table.name}_table.sql`), sql + '\n');
+  }
+
+  for (const func of spec.functions) {
+    const sql = generateCreateFunctionSQL(func);
+    writeToFile(join(dbOut, `${func.name}_function.sql`), sql + '\n');
+  }
+
+  console.log('Generating frontend React hooks...');
+  const hookFiles: string[] = [];
+
+  for (const func of spec.functions) {
+    const hookName = `use${capitalize(func.name)}`;
+    const hook = generateUseHook(func);
+    writeToFile(join(frontendOut, `${hookName}.ts`), hook);
+    hookFiles.push(hookName);
+  }
+
+  // Generate frontend index.ts to re-export all hooks
+  if (hookFiles.length > 0) {
+    const indexContent = hookFiles.map(hook => `export * from './${hook}';`).join('\n');
+    writeToFile(join(frontendOut, 'index.ts'), indexContent + '\n');
+  }
+
+  console.log('✅ Generation complete.');
+} catch (err) {
+  console.error('Generation failed:', err);
+  process.exit(1);
 }
-
-for (const func of spec.functions) {
-  const sql = generateCreateFunctionSQL(func);
-  await writeToFile(join(dbOut, `${func.name}_function.sql`), sql + '\n');
-}
-
-console.log('Generating frontend React hooks...');
-const hookFiles: string[] = [];
-
-for (const func of spec.functions) {
-  const hookName = `use${capitalize(func.name)}`;
-  const hook = generateUseHook(func);
-  await writeToFile(join(frontendOut, `${hookName}.ts`), hook);
-  hookFiles.push(hookName);
-}
-
-// Generate frontend index.ts to re-export all hooks
-if (hookFiles.length > 0) {
-  const indexContent = hookFiles.map(hook => `export * from './${hook}';`).join('\n');
-  await writeToFile(join(frontendOut, 'index.ts'), indexContent + '\n');
-}
-
-console.log('✅ Generation complete.');
 
 // Helper
 function capitalize(name: string): string {
