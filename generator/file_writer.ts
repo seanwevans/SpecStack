@@ -1,6 +1,6 @@
 // generator/file_writer.ts
 
-import { writeFileSync, mkdirSync } from 'fs';
+import { mkdir, writeFile } from 'fs/promises';
 import { dirname } from 'path';
 
 /**
@@ -8,18 +8,18 @@ import { dirname } from 'path';
  * @param filePath The file path to write to.
  * @param content The content to write.
  */
-export function writeToFile(filePath: string, content: string): void {
+export async function writeToFile(filePath: string, content: string): Promise<void> {
   const dir = dirname(filePath);
 
   try {
-    mkdirSync(dir, { recursive: true }); // make sure directory exists
+    await mkdir(dir, { recursive: true }); // make sure directory exists
   } catch (err) {
     console.error(`Failed to create directory for ${filePath}`, err);
     throw err;
   }
 
   try {
-    writeFileSync(filePath, content);
+    await writeFile(filePath, content);
     console.log(`✅ Wrote: ${filePath}`);
   } catch (err) {
     console.error(`❌ Failed to write to ${filePath}`, err);

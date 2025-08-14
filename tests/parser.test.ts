@@ -64,6 +64,11 @@ describe('parseOpenAPI', () => {
     const badPath = path.join(__dirname, 'missing_file.yaml');
     expect(() => parseOpenAPI(badPath)).toThrowError('OpenAPI file not found');
   });
+
+  test('throws a clear error when YAML is invalid', () => {
+    const badPath = path.join(__dirname, 'invalid.yaml');
+    expect(() => parseOpenAPI(badPath)).toThrowError(/Failed to parse OpenAPI file:/);
+  });
 });
 
 describe('parseOpenAPI with complex schemas', () => {
