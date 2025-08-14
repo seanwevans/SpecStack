@@ -37,8 +37,10 @@ export function generateUseHook(func: FunctionSpec): string {
     return response.json();
   }`;
 
+  const importList = func.method === 'GET' ? 'useQuery' : 'useMutation';
+
   return `
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { ${importList} } from '@tanstack/react-query';
 
 export function ${hookName}(${needsParams ? paramsInterface : ''}) {
   return ${

@@ -45,6 +45,41 @@ describe('generation functions', () => {
     responseBodyType: 'Pet[]',
   };
 
+  const updateFunc: FunctionSpec = {
+    name: 'updatePet',
+    method: 'PUT',
+    path: '/pets/{id}',
+    params: [
+      { name: 'id', in: 'path', required: true, type: 'integer' },
+      { name: 'name', in: 'query', required: false, type: 'string' },
+    ],
+    requestBodyType: 'Pet',
+    responseBodyType: 'Pet',
+  };
+
+  const patchFunc: FunctionSpec = {
+    name: 'patchPet',
+    method: 'PATCH',
+    path: '/pets/{id}',
+    params: [
+      { name: 'id', in: 'path', required: true, type: 'integer' },
+      { name: 'tag', in: 'query', required: false, type: 'string' },
+    ],
+    requestBodyType: 'Pet',
+    responseBodyType: 'Pet',
+  };
+
+  const deleteFunc: FunctionSpec = {
+    name: 'deletePet',
+    method: 'DELETE',
+    path: '/pets/{id}',
+    params: [
+      { name: 'id', in: 'path', required: true, type: 'integer' },
+    ],
+    requestBodyType: 'Pet',
+    responseBodyType: undefined,
+  };
+
   test('generateCreateTableSQL', () => {
     const sql = generateCreateTableSQL(table);
     expect(sql).toBe(`CREATE TABLE IF NOT EXISTS Pet (
@@ -66,11 +101,31 @@ describe('generation functions', () => {
     expect(sql).toContain('RETURNING *');
   });
 
+  test('generateCreateFunctionSQL for PUT', () => {
+    const sql = generateCreateFunctionSQL(updateFunc);
+    expect(sql).toContain('UPDATE Pet SET name = name WHERE id = id');
+    expect(sql).toContain('RETURNING *');
+  });
+
+  test('generateCreateFunctionSQL for PATCH', () => {
+    const sql = generateCreateFunctionSQL(patchFunc);
+    expect(sql).toContain('UPDATE Pet SET tag = tag WHERE id = id');
+    expect(sql).toContain('RETURNING *');
+  });
+
+  test('generateCreateFunctionSQL for DELETE', () => {
+    const sql = generateCreateFunctionSQL(deleteFunc);
+    expect(sql).toContain('DELETE FROM Pet WHERE id = id');
+    expect(sql).not.toContain('RETURNING *');
+  });
+
   test('generateUseHook', () => {
     const hook = generateUseHook(func);
-    expect(hook).toContain("useGetPetById");
+    expect(hook).toContain("import { useQuery } from '@tanstack/react-query';");
+    expect(hook).not.toContain('useMutation');
+    expect(hook).toContain('useGetPetById');
     expect(hook).toContain("useQuery({ queryKey: ['getPetById']");
-    expect(hook).toContain("fetch(`/pets/${params.id}");
+    expect(hook).toContain("fetch(`/pets/${params.id}${query ? '?' + query : ''}`);");
   });
 
   test('generateUseHook with query params', () => {
@@ -78,5 +133,6 @@ describe('generation functions', () => {
     expect(hook).toContain('const queryParamsObj = { tag: params.tag, limit: params.limit };');
     expect(hook).toContain('const query = new URLSearchParams(queryParamsObj).toString();');
     expect(hook).toContain("fetch(`/pets${query ? '?' + query : ''}`)");
+
   });
 });
