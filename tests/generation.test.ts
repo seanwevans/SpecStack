@@ -75,8 +75,8 @@ describe('generation functions', () => {
 
   test('generateUseHook with query params', () => {
     const hook = generateUseHook(funcWithQuery);
-    expect(hook).toContain('new URLSearchParams(params).toString()');
+    expect(hook).toContain('const queryParamsObj = { tag: params.tag, limit: params.limit };');
+    expect(hook).toContain('const query = new URLSearchParams(queryParamsObj).toString();');
     expect(hook).toContain("fetch(`/pets${query ? '?' + query : ''}`)");
-    expect(hook).toContain('const query = new URLSearchParams(params).toString();');
   });
 });
