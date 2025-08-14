@@ -121,9 +121,11 @@ describe('generation functions', () => {
 
   test('generateUseHook', () => {
     const hook = generateUseHook(func);
-    expect(hook).toContain("useGetPetById");
+    expect(hook).toContain("import { useQuery } from '@tanstack/react-query';");
+    expect(hook).not.toContain('useMutation');
+    expect(hook).toContain('useGetPetById');
     expect(hook).toContain("useQuery({ queryKey: ['getPetById']");
-    expect(hook).toContain("fetch(`/pets/${params.id}");
+    expect(hook).toContain("fetch(`/pets/${params.id}${query ? '?' + query : ''}`);");
   });
 
   test('generateUseHook with query params', () => {
