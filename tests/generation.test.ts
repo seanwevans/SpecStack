@@ -130,8 +130,16 @@ describe('generation functions', () => {
 
   test('generateUseHook with query params', () => {
     const hook = generateUseHook(funcWithQuery);
-    expect(hook).toContain('const queryParamsObj = { tag: params.tag, limit: params.limit };');
+    expect(hook).toContain('const queryParamsObj = Object.fromEntries(Object.entries({ tag: params.tag, limit: params.limit }).filter(([_, v]) => v !== undefined));');
     expect(hook).toContain('const query = new URLSearchParams(queryParamsObj).toString();');
     expect(hook).toContain("fetch(`/pets${query ? '?' + query : ''}`)");
+
+    const snippetStart = hook.indexOf('const queryParamsObj');
+    const snippetEnd = hook.indexOf('const response');
+    const snippet = hook.slice(snippetStart, snippetEnd);
+    const buildQuery = new Function('params', `${snippet}; return query;`);
+    expect(buildQuery({ tag: undefined, limit: 5 })).toBe('limit=5');
+    expect(buildQuery({ tag: 'cute', limit: undefined })).toBe('tag=cute');
+    expect(buildQuery({ tag: undefined, limit: undefined })).toBe('');
   });
 });
