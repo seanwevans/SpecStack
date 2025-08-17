@@ -21,9 +21,13 @@ export function generateUseHook(func: FunctionSpec): string {
 
   const urlPath = buildUrlTemplate(func.path, urlParams);
 
-  const queryFn = func.method === 'GET'
+    const queryFn = func.method === 'GET'
     ? `async () => {
-    const queryParamsObj = ${queryParams.length > 0 ? `{ ${queryParams.map(p => `${p.name}: params.${p.name}`).join(', ')} }` : '{}'};
+    const queryParamsObj = ${queryParams.length > 0
+      ? `Object.fromEntries(Object.entries({ ${queryParams
+          .map(p => `${p.name}: params.${p.name}`)
+          .join(', ')} }).filter(([_, v]) => v !== undefined))`
+      : '{}'};
     const query = new URLSearchParams(queryParamsObj).toString();
     const response = await fetch(\`${urlPath}\${query ? '?' + query : ''}\`);
     return response.json();
