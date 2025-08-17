@@ -142,4 +142,10 @@ describe('generation functions', () => {
     expect(buildQuery({ tag: 'cute', limit: undefined })).toBe('tag=cute');
     expect(buildQuery({ tag: undefined, limit: undefined })).toBe('');
   });
+
+  test('generateUseHook includes typed body', () => {
+    const hook = generateUseHook(createFunc);
+    expect(hook).toContain("import type { Pet } from '../types';");
+    expect(hook).toContain('body: Pet');
+  });
 });
