@@ -16,7 +16,7 @@ export function generateUseHook(func: FunctionSpec): string {
   const paramsInterface = needsParams ? `params: {
     ${urlParams.map(p => `${p.name}: ${mapTypeToTS(p.type)}`).join(';\n    ')}
     ${queryParams.map(p => `${p.name}?: ${mapTypeToTS(p.type)}`).join(';\n    ')}
-    ${func.requestBodyType ? `body: any` : ''}
+    ${func.requestBodyType ? `body: ${func.requestBodyType}` : ''}
   }` : '';
 
   const urlPath = buildUrlTemplate(func.path, urlParams);
@@ -39,8 +39,12 @@ export function generateUseHook(func: FunctionSpec): string {
 
   const importList = func.method === 'GET' ? 'useQuery' : 'useMutation';
 
+  const imports = [`import { ${importList} } from '@tanstack/react-query';`,
+    func.requestBodyType ? `import type { ${func.requestBodyType} } from '../types';` : ''
+  ].filter(Boolean).join('\n');
+
   return `
-import { ${importList} } from '@tanstack/react-query';
+${imports}
 
 export function ${hookName}(${needsParams ? paramsInterface : ''}) {
   return ${

@@ -134,4 +134,10 @@ describe('generation functions', () => {
     expect(hook).toContain('const query = new URLSearchParams(queryParamsObj).toString();');
     expect(hook).toContain("fetch(`/pets${query ? '?' + query : ''}`)");
   });
+
+  test('generateUseHook includes typed body', () => {
+    const hook = generateUseHook(createFunc);
+    expect(hook).toContain("import type { Pet } from '../types';");
+    expect(hook).toContain('body: Pet');
+  });
 });
