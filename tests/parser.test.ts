@@ -89,3 +89,21 @@ describe('parseOpenAPI with complex schemas', () => {
     ]);
   });
 });
+
+describe('parseOpenAPI with referenced parameters', () => {
+  const specPath = path.join(__dirname, 'ref-params.yaml');
+  const spec = parseOpenAPI(specPath);
+
+  test('resolves parameter references', () => {
+    expect(spec.functions).toContainEqual({
+      name: 'listItems',
+      method: 'GET',
+      path: '/items',
+      params: [
+        { name: 'limit', in: 'query', required: false, type: 'integer' },
+      ],
+      requestBodyType: undefined,
+      responseBodyType: undefined,
+    });
+  });
+});
