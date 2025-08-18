@@ -84,7 +84,7 @@ import { useQuery } from '@tanstack/react-query';
 
 export function useGetPetById(params: { id: number }) {
   return useQuery(['getPetById'], async ({ params }) => {
-    const response = await fetch(`/pets/${params.id}`);
+    const response = await fetch(`/pets/${encodeURIComponent(params.id)}`);
     return response.json();
   });
 }

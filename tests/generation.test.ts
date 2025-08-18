@@ -80,6 +80,17 @@ describe('generation functions', () => {
     responseBodyType: undefined,
   };
 
+  const funcWithEncodedPath: FunctionSpec = {
+    name: 'getPetByTag',
+    method: 'GET',
+    path: '/pets/{tag}',
+    params: [
+      { name: 'tag', in: 'path', required: true, type: 'string' },
+    ],
+    requestBodyType: undefined,
+    responseBodyType: 'Pet',
+  };
+
   test('generateCreateTableSQL', () => {
     const sql = generateCreateTableSQL(table);
     expect(sql).toBe(`CREATE TABLE IF NOT EXISTS Pet (
@@ -125,7 +136,19 @@ describe('generation functions', () => {
     expect(hook).not.toContain('useMutation');
     expect(hook).toContain('useGetPetById');
     expect(hook).toContain("useQuery({ queryKey: ['getPetById']");
-    expect(hook).toContain("fetch(`/pets/${params.id}${query ? '?' + query : ''}`);");
+    expect(hook).toContain("fetch(`/pets/${encodeURIComponent(params.id)}${query ? '?' + query : ''}`);");
+  });
+
+  test('generateUseHook encodes path params', () => {
+    const hook = generateUseHook(funcWithEncodedPath);
+    expect(hook).toContain("fetch(`/pets/${encodeURIComponent(params.tag)}${query ? '?' + query : ''}`);");
+
+    const fetchLine = hook.split('\n').find(line => line.includes('fetch('));
+    const match = fetchLine?.match(/fetch\((`.*`)\)/);
+    expect(match).toBeTruthy();
+    const template = match![1];
+    const buildUrl = new Function('params', `const query = ''; return ${template};`);
+    expect(buildUrl({ tag: 'hello world' })).toBe('/pets/hello%20world');
   });
 
   test('generateUseHook with query params', () => {

@@ -66,7 +66,7 @@ export function ${hookName}(${needsParams ? paramsInterface : ''}) {
 function buildUrlTemplate(pathStr: string, urlParams: { name: string }[]): string {
   let url = pathStr;
   for (const param of urlParams) {
-    url = url.replace(`{${param.name}}`, `\${params.${param.name}}`);
+    url = url.replace(`{${param.name}}`, `\${encodeURIComponent(params.${param.name})}`);
   }
   return url;
 }
