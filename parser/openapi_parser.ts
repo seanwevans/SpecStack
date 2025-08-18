@@ -46,7 +46,12 @@ export function parseOpenAPI(filePath: string): SpecIR {
       for (const method of ['get', 'post', 'put', 'patch', 'delete'] as const) {
         const operation = pathItem[method];
         if (operation) {
-          const func = parseOperationToFunction(method.toUpperCase(), pathKey, operation);
+          const func = parseOperationToFunction(
+            method.toUpperCase(),
+            pathKey,
+            operation,
+            openapiDoc.components?.parameters
+          );
           functions.push(func);
         }
       }
@@ -80,18 +85,24 @@ function parseSchemaToTable(name: string, schema: OpenAPIV3.SchemaObject): Table
 /**
  * Converts an OpenAPI operation into a FunctionSpec.
  */
-function parseOperationToFunction(method: string, path: string, operation: OpenAPIV3.OperationObject): FunctionSpec {
+function parseOperationToFunction(
+  method: string,
+  path: string,
+  operation: OpenAPIV3.OperationObject,
+  globalParams?: Record<string, OpenAPIV3.ParameterObject | OpenAPIV3.ReferenceObject>
+): FunctionSpec {
   const params: ParamSpec[] = [];
 
   if (operation.parameters) {
     for (const param of operation.parameters as (OpenAPIV3.ParameterObject | OpenAPIV3.ReferenceObject)[]) {
-      if ('$ref' in param) continue;
-      params.push({
-        name: param.name,
-        in: param.in as ParamSpec['in'],
-        required: !!param.required,
-        type: (param.schema as OpenAPIV3.SchemaObject | undefined)?.type || 'string'
-      });
+      if ('$ref' in param) {
+        const resolved = resolveParameterRef(param.$ref, globalParams);
+        if (resolved) {
+          params.push(parameterObjectToParamSpec(resolved));
+        }
+        continue;
+      }
+      params.push(parameterObjectToParamSpec(param));
     }
   }
 
@@ -128,6 +139,27 @@ function parseOperationToFunction(method: string, path: string, operation: OpenA
     requestBodyType,
     responseBodyType
   };
+}
+
+function parameterObjectToParamSpec(param: OpenAPIV3.ParameterObject): ParamSpec {
+  return {
+    name: param.name,
+    in: param.in as ParamSpec['in'],
+    required: !!param.required,
+    type: (param.schema as OpenAPIV3.SchemaObject | undefined)?.type || 'string'
+  };
+}
+
+function resolveParameterRef(
+  ref: string,
+  globalParams: Record<string, OpenAPIV3.ParameterObject | OpenAPIV3.ReferenceObject> | undefined
+): OpenAPIV3.ParameterObject | undefined {
+  const refName = extractRefName(ref);
+  let resolved = globalParams?.[refName];
+  while (resolved && '$ref' in resolved) {
+    resolved = globalParams?.[extractRefName(resolved.$ref)];
+  }
+  return resolved as OpenAPIV3.ParameterObject | undefined;
 }
 
 /**
