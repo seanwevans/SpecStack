@@ -103,30 +103,32 @@ describe('generation functions', () => {
   test('generateCreateFunctionSQL for GET', () => {
     const sql = generateCreateFunctionSQL(func);
     expect(sql).toContain('SELECT * FROM Pet');
-    expect(sql).toContain('WHERE id = id');
+    expect(sql).toContain('WHERE id = _id');
+    expect(sql).toMatch(/getPetById\(_id INTEGER\)/);
   });
 
   test('generateCreateFunctionSQL for POST', () => {
     const sql = generateCreateFunctionSQL(createFunc);
-    expect(sql).toContain('INSERT INTO Pet (id, name) VALUES (id, name)');
+    expect(sql).toContain('INSERT INTO Pet (id, name) VALUES (_id, _name)');
+    expect(sql).toMatch(/createPet\(_id INTEGER, _name VARCHAR\)/);
     expect(sql).toContain('RETURNING *');
   });
 
   test('generateCreateFunctionSQL for PUT', () => {
     const sql = generateCreateFunctionSQL(updateFunc);
-    expect(sql).toContain('UPDATE Pet SET name = name WHERE id = id');
+    expect(sql).toContain('UPDATE Pet SET name = _name WHERE id = _id');
     expect(sql).toContain('RETURNING *');
   });
 
   test('generateCreateFunctionSQL for PATCH', () => {
     const sql = generateCreateFunctionSQL(patchFunc);
-    expect(sql).toContain('UPDATE Pet SET tag = tag WHERE id = id');
+    expect(sql).toContain('UPDATE Pet SET tag = _tag WHERE id = _id');
     expect(sql).toContain('RETURNING *');
   });
 
   test('generateCreateFunctionSQL for DELETE', () => {
     const sql = generateCreateFunctionSQL(deleteFunc);
-    expect(sql).toContain('DELETE FROM Pet WHERE id = id');
+    expect(sql).toContain('DELETE FROM Pet WHERE id = _id');
     expect(sql).not.toContain('RETURNING *');
   });
 

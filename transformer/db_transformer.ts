@@ -30,7 +30,9 @@ function generateColumnSQL(column: ColumnSpec): string {
  * (for now just stubs out the function, assuming use in PostgreSQL)
  */
 export function generateCreateFunctionSQL(func: FunctionSpec): string {
-  const paramList = func.params.map(p => `${p.name} ${mapTypeToSQL(p.type)}`).join(', ');
+  const paramList = func.params
+    .map(p => `_${p.name} ${mapTypeToSQL(p.type)}`)
+    .join(', ');
   const returnType = func.responseBodyType ? mapTypeToSQL(func.responseBodyType) : 'VOID';
 
   const tableName = getTableNameFromFunc(func);
@@ -61,17 +63,24 @@ function getTableNameFromFunc(func: FunctionSpec): string {
  */
 function generateFunctionBodySQL(func: FunctionSpec, tableName: string): string {
   const paramNames = func.params.map(p => p.name);
+  const placeholders: Record<string, string> = Object.fromEntries(
+    paramNames.map(name => [name, `_${name}`])
+  );
   switch (func.method) {
     case 'GET': {
       const whereClause = paramNames.length
-        ? ' WHERE ' + paramNames.map(name => `${name} = ${name}`).join(' AND ')
+        ?
+            ' WHERE ' +
+            paramNames
+              .map(name => `${name} = ${placeholders[name]}`)
+              .join(' AND ')
         : '';
       return `SELECT * FROM ${tableName}${whereClause};`;
     }
     case 'POST': {
       if (paramNames.length) {
         const columns = paramNames.join(', ');
-        const values = paramNames.join(', ');
+        const values = paramNames.map(name => placeholders[name]).join(', ');
         return `INSERT INTO ${tableName} (${columns}) VALUES (${values})${func.responseBodyType ? ' RETURNING *' : ''};`;
       }
       return `INSERT INTO ${tableName} DEFAULT VALUES${func.responseBodyType ? ' RETURNING *' : ''};`;
@@ -81,15 +90,21 @@ function generateFunctionBodySQL(func: FunctionSpec, tableName: string): string 
       if (paramNames.length) {
         const [idParam, ...rest] = paramNames;
         if (rest.length) {
-          const setClause = rest.map(name => `${name} = ${name}`).join(', ');
-          return `UPDATE ${tableName} SET ${setClause} WHERE ${idParam} = ${idParam}${func.responseBodyType ? ' RETURNING *' : ''};`;
+          const setClause = rest
+            .map(name => `${name} = ${placeholders[name]}`)
+            .join(', ');
+          return `UPDATE ${tableName} SET ${setClause} WHERE ${idParam} = ${placeholders[idParam]}${func.responseBodyType ? ' RETURNING *' : ''};`;
         }
       }
       return `-- TODO: Implement SQL body for ${func.name}`;
     }
     case 'DELETE': {
       const whereClause = paramNames.length
-        ? ' WHERE ' + paramNames.map(name => `${name} = ${name}`).join(' AND ')
+        ?
+            ' WHERE ' +
+            paramNames
+              .map(name => `${name} = ${placeholders[name]}`)
+              .join(' AND ')
         : '';
       return `DELETE FROM ${tableName}${whereClause}${func.responseBodyType ? ' RETURNING *' : ''};`;
     }
