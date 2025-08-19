@@ -89,14 +89,12 @@ function generateFunctionBodySQL(func: FunctionSpec, tableName: string): string 
     case 'PATCH': {
       if (paramNames.length) {
         const [idParam, ...rest] = paramNames;
-        if (rest.length) {
-          const setClause = rest
-            .map(name => `${name} = ${placeholders[name]}`)
-            .join(', ');
-          return `UPDATE ${tableName} SET ${setClause} WHERE ${idParam} = ${placeholders[idParam]}${func.responseBodyType ? ' RETURNING *' : ''};`;
-        }
+        const setClause = rest.length
+          ? rest.map(name => `${name} = ${placeholders[name]}`).join(', ')
+          : '-- no columns to update';
+        return `UPDATE ${tableName} SET ${setClause} WHERE ${idParam} = ${placeholders[idParam]}${func.responseBodyType ? ' RETURNING *' : ''};`;
       }
-      return `-- TODO: Implement SQL body for ${func.name}`;
+      return `UPDATE ${tableName} SET -- no parameters provided${func.responseBodyType ? ' RETURNING *' : ''};`;
     }
     case 'DELETE': {
       const whereClause = paramNames.length
@@ -108,8 +106,10 @@ function generateFunctionBodySQL(func: FunctionSpec, tableName: string): string 
         : '';
       return `DELETE FROM ${tableName}${whereClause}${func.responseBodyType ? ' RETURNING *' : ''};`;
     }
+    case 'HEAD':
+    case 'OPTIONS':
     default:
-      return `-- TODO: Implement SQL body for ${func.name}`;
+      return `-- Unsupported HTTP method: ${func.method}`;
   }
 }
 
