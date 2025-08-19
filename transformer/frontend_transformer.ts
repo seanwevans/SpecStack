@@ -14,8 +14,8 @@ export function generateUseHook(func: FunctionSpec): string {
   const needsParams = urlParams.length > 0 || queryParams.length > 0 || func.requestBodyType;
 
   const paramsInterface = needsParams ? `params: {
-    ${urlParams.map(p => `${p.name}: ${mapTypeToTS(p.type)}`).join(';\n    ')}
-    ${queryParams.map(p => `${p.name}?: ${mapTypeToTS(p.type)}`).join(';\n    ')}
+    ${urlParams.map(p => `${p.name}: ${mapTypeToTS(p.schema || p.type)}`).join(';\n    ')}
+    ${queryParams.map(p => `${p.name}?: ${mapTypeToTS(p.schema || p.type)}`).join(';\n    ')}
     ${func.requestBodyType ? `body: ${func.requestBodyType}` : ''}
   }` : '';
 
@@ -43,8 +43,18 @@ export function generateUseHook(func: FunctionSpec): string {
 
   const importList = func.method === 'GET' ? 'useQuery' : 'useMutation';
 
+  const typeSet = new Set<string>();
+  const addType = (t?: string) => {
+    if (!t) return;
+    const base = t.replace(/\[\]$/, '');
+    if (/^(string|number|boolean|any)$/.test(base)) return;
+    typeSet.add(base);
+  };
+  addType(func.requestBodyType);
+  addType(func.responseBodyType);
+
   const imports = [`import { ${importList} } from '@tanstack/react-query';`,
-    func.requestBodyType ? `import type { ${func.requestBodyType} } from '../types';` : ''
+    typeSet.size ? `import type { ${Array.from(typeSet).join(', ')} } from '../types';` : ''
   ].filter(Boolean).join('\n');
 
   return `
@@ -53,8 +63,8 @@ ${imports}
 export function ${hookName}(${needsParams ? paramsInterface : ''}) {
   return ${
     func.method === 'GET'
-      ? `useQuery({ queryKey: ['${queryKey}'], queryFn: ${queryFn} })`
-      : `useMutation({ mutationFn: ${queryFn} })`
+      ? `useQuery<${func.responseBodyType || 'any'}>({ queryKey: ['${queryKey}'], queryFn: ${queryFn} })`
+      : `useMutation<${func.responseBodyType || 'any'}>({ mutationFn: ${queryFn} })`
   };
 }
 `.trim();
@@ -74,8 +84,34 @@ function buildUrlTemplate(pathStr: string, urlParams: { name: string }[]): strin
 /**
  * Maps OpenAPI types to TypeScript types.
  */
-function mapTypeToTS(type: string): string {
-  switch (type) {
+function mapTypeToTS(schema: any): string {
+  if (typeof schema === 'string') {
+    switch (schema) {
+      case 'string':
+        return 'string';
+      case 'integer':
+        return 'number';
+      case 'boolean':
+        return 'boolean';
+      case 'number':
+        return 'number';
+      case 'array':
+        return 'any[]';
+      default:
+        return 'any';
+    }
+  }
+
+  if (schema?.$ref) {
+    return extractRefName(schema.$ref);
+  }
+
+  if (schema?.type === 'array') {
+    const itemType = mapTypeToTS(schema.items);
+    return `${itemType}[]`;
+  }
+
+  switch (schema?.type) {
     case 'string':
       return 'string';
     case 'integer':
@@ -84,11 +120,13 @@ function mapTypeToTS(type: string): string {
       return 'boolean';
     case 'number':
       return 'number';
-    case 'array':
-      return 'any[]'; // Simplified
     default:
       return 'any';
   }
+}
+
+function extractRefName(ref: string): string {
+  return ref.substring(ref.lastIndexOf('/') + 1);
 }
 
 /**

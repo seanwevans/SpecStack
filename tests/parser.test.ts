@@ -40,6 +40,15 @@ describe('parseOpenAPI', () => {
     });
 
     expect(spec.functions).toContainEqual({
+      name: 'listPets',
+      method: 'GET',
+      path: '/pets',
+      params: [],
+      requestBodyType: undefined,
+      responseBodyType: 'Pet[]',
+    });
+
+    expect(spec.functions).toContainEqual({
       name: 'createPet201',
       method: 'POST',
       path: '/pets-creation',

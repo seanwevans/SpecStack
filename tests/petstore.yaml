@@ -32,6 +32,17 @@ paths:
         '204':
           description: No Content
   /pets:
+    get:
+      operationId: listPets
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pet'
     post:
       operationId: createPet
       requestBody:

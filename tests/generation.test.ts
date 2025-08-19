@@ -135,9 +135,10 @@ describe('generation functions', () => {
   test('generateUseHook', () => {
     const hook = generateUseHook(func);
     expect(hook).toContain("import { useQuery } from '@tanstack/react-query';");
+    expect(hook).toContain("import type { Pet } from '../types';");
     expect(hook).not.toContain('useMutation');
     expect(hook).toContain('useGetPetById');
-    expect(hook).toContain("useQuery({ queryKey: ['getPetById']");
+    expect(hook).toContain("useQuery<Pet>({ queryKey: ['getPetById']");
     expect(hook).toContain("fetch(`/pets/${encodeURIComponent(params.id)}${query ? '?' + query : ''}`);");
   });
 
@@ -166,6 +167,12 @@ describe('generation functions', () => {
     expect(buildQuery({ tag: undefined, limit: 5 })).toBe('limit=5');
     expect(buildQuery({ tag: 'cute', limit: undefined })).toBe('tag=cute');
     expect(buildQuery({ tag: undefined, limit: undefined })).toBe('');
+  });
+
+  test('generateUseHook returns typed array', () => {
+    const hook = generateUseHook(funcWithQuery);
+    expect(hook).toContain("import type { Pet } from '../types';");
+    expect(hook).toContain('useQuery<Pet[]>');
   });
 
   test('generateUseHook includes typed body', () => {

@@ -36,6 +36,8 @@ export interface ParamSpec {
   in: 'path' | 'query' | 'header' | 'cookie';
   required: boolean;
   type: string; // e.g., "string", "integer"
+  // Original schema object for advanced typing (e.g., arrays)
+  schema?: any;
 }
 
 // Enumerates supported HTTP methods
