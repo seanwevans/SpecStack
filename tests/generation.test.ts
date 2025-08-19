@@ -69,6 +69,46 @@ describe('generation functions', () => {
     responseBodyType: 'Pet',
   };
 
+  const updateFuncNoParams: FunctionSpec = {
+    name: 'updatePetNoParams',
+    method: 'PUT',
+    path: '/pets/{id}',
+    params: [
+      { name: 'id', in: 'path', required: true, type: 'integer' },
+    ],
+    requestBodyType: 'Pet',
+    responseBodyType: 'Pet',
+  };
+
+  const patchFuncNoParams: FunctionSpec = {
+    name: 'patchPetNoParams',
+    method: 'PATCH',
+    path: '/pets/{id}',
+    params: [
+      { name: 'id', in: 'path', required: true, type: 'integer' },
+    ],
+    requestBodyType: 'Pet',
+    responseBodyType: 'Pet',
+  };
+
+  const headFunc: FunctionSpec = {
+    name: 'headPets',
+    method: 'HEAD',
+    path: '/pets',
+    params: [],
+    requestBodyType: undefined,
+    responseBodyType: undefined,
+  };
+
+  const optionsFunc: FunctionSpec = {
+    name: 'optionsPets',
+    method: 'OPTIONS',
+    path: '/pets',
+    params: [],
+    requestBodyType: undefined,
+    responseBodyType: undefined,
+  };
+
   const deleteFunc: FunctionSpec = {
     name: 'deletePet',
     method: 'DELETE',
@@ -126,10 +166,29 @@ describe('generation functions', () => {
     expect(sql).toContain('RETURNING *');
   });
 
+  test('generateCreateFunctionSQL for PUT with only id param', () => {
+    const sql = generateCreateFunctionSQL(updateFuncNoParams);
+    expect(sql).toContain('UPDATE Pet SET -- no columns to update WHERE id = _id');
+    expect(sql).toContain('RETURNING *');
+  });
+
+  test('generateCreateFunctionSQL for PATCH with only id param', () => {
+    const sql = generateCreateFunctionSQL(patchFuncNoParams);
+    expect(sql).toContain('UPDATE Pet SET -- no columns to update WHERE id = _id');
+    expect(sql).toContain('RETURNING *');
+  });
+
   test('generateCreateFunctionSQL for DELETE', () => {
     const sql = generateCreateFunctionSQL(deleteFunc);
     expect(sql).toContain('DELETE FROM Pet WHERE id = _id');
     expect(sql).not.toContain('RETURNING *');
+  });
+
+  test('generateCreateFunctionSQL for unsupported methods', () => {
+    const headSql = generateCreateFunctionSQL(headFunc);
+    expect(headSql).toContain('-- Unsupported HTTP method: HEAD');
+    const optionsSql = generateCreateFunctionSQL(optionsFunc);
+    expect(optionsSql).toContain('-- Unsupported HTTP method: OPTIONS');
   });
 
   test('generateUseHook', () => {
