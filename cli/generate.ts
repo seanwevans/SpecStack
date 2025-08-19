@@ -26,31 +26,56 @@ async function main(): Promise<void> {
     const frontendOut = join(outputBase, 'frontend/src/hooks');
 
     console.log('Generating DB schema and functions...');
+    const tableWrites: Promise<void>[] = [];
     for (const table of spec.tables) {
       const sql = generateCreateTableSQL(table);
-      await writeToFile(join(dbOut, `${table.name}_table.sql`), sql + '\n');
+      const filePath = join(dbOut, `${table.name}_table.sql`);
+      tableWrites.push(
+        writeToFile(filePath, sql + '\n').catch(err => {
+          throw new Error(`Failed to write ${filePath}: ${err.message}`);
+        })
+      );
     }
 
+    const functionWrites: Promise<void>[] = [];
     for (const func of spec.functions) {
       const sql = generateCreateFunctionSQL(func);
-      await writeToFile(join(dbOut, `${func.name}_function.sql`), sql + '\n');
+      const filePath = join(dbOut, `${func.name}_function.sql`);
+      functionWrites.push(
+        writeToFile(filePath, sql + '\n').catch(err => {
+          throw new Error(`Failed to write ${filePath}: ${err.message}`);
+        })
+      );
     }
 
     console.log('Generating frontend React hooks...');
     const hookFiles: string[] = [];
+    const hookWrites: Promise<void>[] = [];
 
     for (const func of spec.functions) {
       const hookName = `use${capitalize(func.name)}`;
       const hook = generateUseHook(func);
-      await writeToFile(join(frontendOut, `${hookName}.ts`), hook);
+      const filePath = join(frontendOut, `${hookName}.ts`);
       hookFiles.push(hookName);
+      hookWrites.push(
+        writeToFile(filePath, hook).catch(err => {
+          throw new Error(`Failed to write ${filePath}: ${err.message}`);
+        })
+      );
     }
 
     // Generate frontend index.ts to re-export all hooks
     if (hookFiles.length > 0) {
       const indexContent = hookFiles.map(hook => `export * from './${hook}';`).join('\n');
-      await writeToFile(join(frontendOut, 'index.ts'), indexContent + '\n');
+      const indexPath = join(frontendOut, 'index.ts');
+      hookWrites.push(
+        writeToFile(indexPath, indexContent + '\n').catch(err => {
+          throw new Error(`Failed to write ${indexPath}: ${err.message}`);
+        })
+      );
     }
+
+    await Promise.all([...tableWrites, ...functionWrites, ...hookWrites]);
 
     console.log('✅ Generation complete.');
   } catch (err) {
