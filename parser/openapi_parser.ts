@@ -1,7 +1,7 @@
 // parser/openapi_parser.ts
 
 import { SpecIR, TableSpec, ColumnSpec, FunctionSpec, ParamSpec, HttpMethod } from '../types/specir.js';
-import fs from 'fs';
+import { readFile, access } from 'fs/promises';
 import yaml from 'js-yaml';
 import path from 'path';
 import { OpenAPIV3 } from 'openapi-types';
@@ -10,14 +10,16 @@ import { OpenAPIV3 } from 'openapi-types';
  * Parses an OpenAPI YAML or JSON file into a SpecIR intermediate model.
  * @param filePath The path to the OpenAPI spec file.
  */
-export function parseOpenAPI(filePath: string): SpecIR {
+export async function parseOpenAPI(filePath: string): Promise<SpecIR> {
   console.log(`Parsing OpenAPI spec from: ${filePath}`);
 
-  if (!fs.existsSync(filePath)) {
+  try {
+    await access(filePath);
+  } catch {
     throw new Error(`OpenAPI file not found: ${filePath}`);
   }
 
-  const fileContent = fs.readFileSync(filePath, 'utf-8');
+  const fileContent = await readFile(filePath, 'utf-8');
   let openapiDoc: OpenAPIV3.Document;
   try {
     openapiDoc = yaml.load(fileContent) as OpenAPIV3.Document;

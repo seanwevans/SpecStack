@@ -1,9 +1,14 @@
 import path from 'path';
 import { parseOpenAPI } from '../parser/openapi_parser';
+import { SpecIR } from '../types/specir';
 
 describe('parseOpenAPI', () => {
   const specPath = path.join(__dirname, 'petstore.yaml');
-  const spec = parseOpenAPI(specPath);
+  let spec: SpecIR;
+
+  beforeAll(async () => {
+    spec = await parseOpenAPI(specPath);
+  });
 
   test('parses tables', () => {
     expect(spec.tables).toEqual([
@@ -60,20 +65,24 @@ describe('parseOpenAPI', () => {
     });
   });
 
-  test('throws a clear error when file is missing', () => {
+  test('throws a clear error when file is missing', async () => {
     const badPath = path.join(__dirname, 'missing_file.yaml');
-    expect(() => parseOpenAPI(badPath)).toThrowError('OpenAPI file not found');
+    await expect(parseOpenAPI(badPath)).rejects.toThrowError('OpenAPI file not found');
   });
 
-  test('throws a clear error when YAML is invalid', () => {
+  test('throws a clear error when YAML is invalid', async () => {
     const badPath = path.join(__dirname, 'invalid.yaml');
-    expect(() => parseOpenAPI(badPath)).toThrowError(/Failed to parse OpenAPI file:/);
+    await expect(parseOpenAPI(badPath)).rejects.toThrowError(/Failed to parse OpenAPI file:/);
   });
 });
 
 describe('parseOpenAPI with complex schemas', () => {
   const specPath = path.join(__dirname, 'complex.yaml');
-  const spec = parseOpenAPI(specPath);
+  let spec: SpecIR;
+
+  beforeAll(async () => {
+    spec = await parseOpenAPI(specPath);
+  });
 
   test('handles array and object types', () => {
     expect(spec.tables).toEqual([
@@ -92,7 +101,11 @@ describe('parseOpenAPI with complex schemas', () => {
 
 describe('parseOpenAPI with referenced parameters', () => {
   const specPath = path.join(__dirname, 'ref-params.yaml');
-  const spec = parseOpenAPI(specPath);
+  let spec: SpecIR;
+
+  beforeAll(async () => {
+    spec = await parseOpenAPI(specPath);
+  });
 
   test('resolves parameter references', () => {
     expect(spec.functions).toContainEqual({

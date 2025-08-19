@@ -20,7 +20,7 @@ async function main(): Promise<void> {
   try {
     console.log(`Parsing OpenAPI spec from ${openapiPath}...`);
 
-    const spec = parseOpenAPI(openapiPath);
+    const spec = await parseOpenAPI(openapiPath);
 
     const dbOut = join(outputBase, 'db');
     const frontendOut = join(outputBase, 'frontend/src/hooks');
