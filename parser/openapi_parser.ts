@@ -112,8 +112,19 @@ function parseOperationToFunction(
   let requestBodyType: string | undefined;
   const requestBody = operation.requestBody as OpenAPIV3.RequestBodyObject | undefined;
   const reqSchema = requestBody?.content?.['application/json']?.schema;
-  if (reqSchema && '$ref' in reqSchema) {
-    requestBodyType = extractRefName(reqSchema.$ref);
+  if (reqSchema) {
+    if ('$ref' in reqSchema) {
+      requestBodyType = extractRefName(reqSchema.$ref);
+    } else if (reqSchema.type === 'array' && reqSchema.items) {
+      const items = reqSchema.items as any;
+      if ('$ref' in items) {
+        requestBodyType = `${extractRefName(items.$ref)}[]`;
+      } else if (items.type) {
+        requestBodyType = `${mapSchemaTypeToTSType(items.type)}[]`;
+      } else {
+        requestBodyType = 'any[]';
+      }
+    }
   }
 
   let responseBodyType: string | undefined;
@@ -126,9 +137,21 @@ function parseOperationToFunction(
       const response = responses[code] as OpenAPIV3.ResponseObject | OpenAPIV3.ReferenceObject;
       if ('$ref' in response) continue;
       const schema = response.content?.['application/json']?.schema;
-      if (schema && '$ref' in schema) {
-        responseBodyType = extractRefName(schema.$ref);
-        break;
+      if (schema) {
+        if ('$ref' in schema) {
+          responseBodyType = extractRefName(schema.$ref);
+          break;
+        } else if (schema.type === 'array' && schema.items) {
+          const items = schema.items as any;
+          if ('$ref' in items) {
+            responseBodyType = `${extractRefName(items.$ref)}[]`;
+          } else if (items.type) {
+            responseBodyType = `${mapSchemaTypeToTSType(items.type)}[]`;
+          } else {
+            responseBodyType = 'any[]';
+          }
+          break;
+        }
       }
     }
   }
@@ -144,11 +167,13 @@ function parseOperationToFunction(
 }
 
 function parameterObjectToParamSpec(param: OpenAPIV3.ParameterObject): ParamSpec {
+  const schema = param.schema as OpenAPIV3.SchemaObject | undefined;
   return {
     name: param.name,
     in: param.in as ParamSpec['in'],
     required: !!param.required,
-    type: (param.schema as OpenAPIV3.SchemaObject | undefined)?.type || 'string'
+    type: schema?.type || 'string',
+    schema: schema?.type === 'array' ? schema : undefined
   };
 }
 
@@ -201,6 +226,22 @@ function mapOpenAPITypeToSQLType(propSchema: any): string {
  */
 function extractRefName(ref: string): string {
   return path.basename(ref);
+}
+
+// Map primitive schema types to TS types
+function mapSchemaTypeToTSType(type: string): string {
+  switch (type) {
+    case 'string':
+      return 'string';
+    case 'integer':
+      return 'number';
+    case 'number':
+      return 'number';
+    case 'boolean':
+      return 'boolean';
+    default:
+      return 'any';
+  }
 }
 
 /**
