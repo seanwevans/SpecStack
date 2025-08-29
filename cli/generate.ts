@@ -5,6 +5,7 @@ import { generateCreateTableSQL, generateCreateFunctionSQL } from '../transforme
 import { generateUseHook } from '../transformer/frontend_transformer.js';
 import { writeToFile } from '../generator/file_writer.js';
 import { join } from 'path';
+import { capitalize } from '../utils/string.js';
 
 const args = process.argv.slice(2);
 
@@ -86,7 +87,3 @@ async function main(): Promise<void> {
 
 await main();
 
-// Helper
-function capitalize(name: string): string {
-  return name.charAt(0).toUpperCase() + name.slice(1);
-}

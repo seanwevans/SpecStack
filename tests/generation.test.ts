@@ -168,14 +168,14 @@ describe('generation functions', () => {
 
   test('generateCreateFunctionSQL for PUT with only id param', () => {
     const sql = generateCreateFunctionSQL(updateFuncNoParams);
-    expect(sql).toContain('UPDATE Pet SET -- no columns to update WHERE id = _id');
-    expect(sql).toContain('RETURNING *');
+    expect(sql).toContain('-- Warning: no columns provided to update');
+    expect(sql).not.toContain('RETURNING *');
   });
 
   test('generateCreateFunctionSQL for PATCH with only id param', () => {
     const sql = generateCreateFunctionSQL(patchFuncNoParams);
-    expect(sql).toContain('UPDATE Pet SET -- no columns to update WHERE id = _id');
-    expect(sql).toContain('RETURNING *');
+    expect(sql).toContain('-- Warning: no columns provided to update');
+    expect(sql).not.toContain('RETURNING *');
   });
 
   test('generateCreateFunctionSQL for DELETE', () => {
@@ -199,6 +199,9 @@ describe('generation functions', () => {
     expect(hook).toContain('useGetPetById');
     expect(hook).toContain("useQuery<Pet>({ queryKey: ['getPetById']");
     expect(hook).toContain("fetch(`/pets/${encodeURIComponent(params.id)}${query ? '?' + query : ''}`);");
+    expect(hook).toContain('if (!response.ok)');
+    expect(hook).toContain("throw new Error('Network response was not ok')");
+    expect(hook).toContain('return response.json();');
   });
 
   test('generateUseHook encodes path params', () => {
@@ -238,5 +241,14 @@ describe('generation functions', () => {
     const hook = generateUseHook(createFunc);
     expect(hook).toContain("import type { Pet } from '../types';");
     expect(hook).toContain('body: Pet');
+  });
+
+  test('generateUseHook without response body', () => {
+    const hook = generateUseHook(deleteFunc);
+    expect(hook).toContain("import { useMutation } from '@tanstack/react-query';");
+    expect(hook).toContain('if (!response.ok)');
+    expect(hook).toContain("throw new Error('Network response was not ok')");
+    expect(hook).toContain('return undefined;');
+    expect(hook).not.toContain('response.json()');
   });
 });

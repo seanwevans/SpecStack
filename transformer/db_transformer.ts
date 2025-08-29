@@ -89,12 +89,19 @@ function generateFunctionBodySQL(func: FunctionSpec, tableName: string): string 
     case 'PATCH': {
       if (paramNames.length) {
         const [idParam, ...rest] = paramNames;
-        const setClause = rest.length
-          ? rest.map(name => `${name} = ${placeholders[name]}`).join(', ')
-          : '-- no columns to update';
+        if (rest.length === 0) {
+          const warning = `-- Warning: no columns provided to update for ${tableName}`;
+          console.warn(warning);
+          return warning;
+        }
+        const setClause = rest
+          .map(name => `${name} = ${placeholders[name]}`)
+          .join(', ');
         return `UPDATE ${tableName} SET ${setClause} WHERE ${idParam} = ${placeholders[idParam]}${func.responseBodyType ? ' RETURNING *' : ''};`;
       }
-      return `UPDATE ${tableName} SET -- no parameters provided${func.responseBodyType ? ' RETURNING *' : ''};`;
+      const warning = `-- Warning: no parameters provided for ${tableName} update`;
+      console.warn(warning);
+      return warning;
     }
     case 'DELETE': {
       const whereClause = paramNames.length
