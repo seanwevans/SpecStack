@@ -4,6 +4,7 @@ import { parseOpenAPI } from '../parser/openapi_parser.js';
 import { generateCreateTableSQL, generateCreateFunctionSQL } from '../transformer/db_transformer.js';
 import { generateUseHook } from '../transformer/frontend_transformer.js';
 import { writeToFile } from '../generator/file_writer.js';
+import { generateTypes } from '../generator/type_writer.js';
 import { join } from 'path';
 
 const args = process.argv.slice(2);
@@ -24,6 +25,7 @@ async function main(): Promise<void> {
 
     const dbOut = join(outputBase, 'db');
     const frontendOut = join(outputBase, 'frontend/src/hooks');
+    const frontendSrcOut = join(outputBase, 'frontend/src');
 
     console.log('Generating DB schema and functions...');
     const tableWrites: Promise<void>[] = [];
@@ -47,6 +49,13 @@ async function main(): Promise<void> {
         })
       );
     }
+
+    console.log('Generating frontend types...');
+    const typesContent = generateTypes(spec);
+    const typesPath = join(frontendSrcOut, 'types.ts');
+    const typeWrite = writeToFile(typesPath, typesContent + '\n').catch(err => {
+      throw new Error(`Failed to write ${typesPath}: ${err.message}`);
+    });
 
     console.log('Generating frontend React hooks...');
     const hookFiles: string[] = [];
@@ -75,7 +84,7 @@ async function main(): Promise<void> {
       );
     }
 
-    await Promise.all([...tableWrites, ...functionWrites, ...hookWrites]);
+    await Promise.all([typeWrite, ...tableWrites, ...functionWrites, ...hookWrites]);
 
     console.log('✅ Generation complete.');
   } catch (err) {

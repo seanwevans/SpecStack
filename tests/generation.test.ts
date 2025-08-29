@@ -1,6 +1,7 @@
 import { generateCreateTableSQL, generateCreateFunctionSQL } from '../transformer/db_transformer';
 import { generateUseHook } from '../transformer/frontend_transformer';
-import { TableSpec, FunctionSpec } from '../types/specir';
+import { generateTypes } from '../generator/type_writer';
+import { TableSpec, FunctionSpec, SpecIR } from '../types/specir';
 
 describe('generation functions', () => {
   const table: TableSpec = {
@@ -238,5 +239,14 @@ describe('generation functions', () => {
     const hook = generateUseHook(createFunc);
     expect(hook).toContain("import type { Pet } from '../types';");
     expect(hook).toContain('body: Pet');
+  });
+
+  test('generateTypes produces interfaces', () => {
+    const spec: SpecIR = { tables: [table], functions: [] };
+    const output = generateTypes(spec);
+    expect(output).toContain('export interface Pet');
+    expect(output).toContain('id: number;');
+    expect(output).toContain('name: string;');
+    expect(output).toContain('tag?: string;');
   });
 });
