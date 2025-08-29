@@ -1,6 +1,7 @@
 // transformer/frontend_transformer.ts
 
 import { FunctionSpec } from '../types/specir.js';
+import { capitalize } from '../utils/string.js';
 
 /**
  * Generates a React Query hook for a given API function.
@@ -127,11 +128,4 @@ function mapTypeToTS(schema: any): string {
 
 function extractRefName(ref: string): string {
   return ref.substring(ref.lastIndexOf('/') + 1);
-}
-
-/**
- * Capitalizes the first letter of a string.
- */
-function capitalize(s: string): string {
-  return s.charAt(0).toUpperCase() + s.slice(1);
 }
