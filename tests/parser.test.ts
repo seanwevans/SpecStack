@@ -63,6 +63,24 @@ describe('parseOpenAPI', () => {
     });
 
     expect(spec.functions).toContainEqual({
+      name: 'headPets',
+      method: 'HEAD',
+      path: '/pets',
+      params: [],
+      requestBodyType: undefined,
+      responseBodyType: undefined,
+    });
+
+    expect(spec.functions).toContainEqual({
+      name: 'optionsPets',
+      method: 'OPTIONS',
+      path: '/pets',
+      params: [],
+      requestBodyType: undefined,
+      responseBodyType: undefined,
+    });
+
+    expect(spec.functions).toContainEqual({
       name: 'deletePet',
       method: 'DELETE',
       path: '/pets/{id}',

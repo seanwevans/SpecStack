@@ -21,8 +21,9 @@ export function generateUseHook(func: FunctionSpec): string {
 
   const urlPath = buildUrlTemplate(func.path, urlParams);
 
-    const queryFn = func.method === 'GET'
-    ? `async () => {
+  const queryFn =
+    func.method === 'GET'
+      ? `async () => {
     const queryParamsObj = ${queryParams.length > 0
       ? `Object.fromEntries(Object.entries({ ${queryParams
           .map(p => `${p.name}: params.${p.name}`)
@@ -32,11 +33,9 @@ export function generateUseHook(func: FunctionSpec): string {
     const response = await fetch(\`${urlPath}\${query ? '?' + query : ''}\`);
     return response.json();
   }`
-    : `async () => {
+      : `async (${needsParams ? 'params' : ''}) => {
     const response = await fetch(\`${urlPath}\`, {
-      method: '${func.method}',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(params.body)
+      method: '${func.method}'${func.requestBodyType ? `,\n      headers: { 'Content-Type': 'application/json' },\n      body: JSON.stringify(params.body)` : ''}
     });
     return response.json();
   }`;
