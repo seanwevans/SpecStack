@@ -168,14 +168,14 @@ describe('generation functions', () => {
 
   test('generateCreateFunctionSQL for PUT with only id param', () => {
     const sql = generateCreateFunctionSQL(updateFuncNoParams);
-    expect(sql).toContain('UPDATE Pet SET -- no columns to update WHERE id = _id');
-    expect(sql).toContain('RETURNING *');
+    expect(sql).toContain('-- Warning: no columns provided to update');
+    expect(sql).not.toContain('RETURNING *');
   });
 
   test('generateCreateFunctionSQL for PATCH with only id param', () => {
     const sql = generateCreateFunctionSQL(patchFuncNoParams);
-    expect(sql).toContain('UPDATE Pet SET -- no columns to update WHERE id = _id');
-    expect(sql).toContain('RETURNING *');
+    expect(sql).toContain('-- Warning: no columns provided to update');
+    expect(sql).not.toContain('RETURNING *');
   });
 
   test('generateCreateFunctionSQL for DELETE', () => {
