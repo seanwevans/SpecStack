@@ -21,7 +21,8 @@ export function generateUseHook(func: FunctionSpec): string {
 
   const urlPath = buildUrlTemplate(func.path, urlParams);
 
-    const queryFn = func.method === 'GET'
+    const responseHandling = `if (!response.ok) {\n      throw new Error('Network response was not ok');\n    }\n    ${func.responseBodyType ? 'return response.json();' : 'return undefined;'}\n  `;
+  const queryFn = func.method === 'GET'
     ? `async () => {
     const queryParamsObj = ${queryParams.length > 0
       ? `Object.fromEntries(Object.entries({ ${queryParams
@@ -30,7 +31,7 @@ export function generateUseHook(func: FunctionSpec): string {
       : '{}'};
     const query = new URLSearchParams(queryParamsObj).toString();
     const response = await fetch(\`${urlPath}\${query ? '?' + query : ''}\`);
-    return response.json();
+    ${responseHandling}
   }`
     : `async () => {
     const response = await fetch(\`${urlPath}\`, {
@@ -38,7 +39,7 @@ export function generateUseHook(func: FunctionSpec): string {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(params.body)
     });
-    return response.json();
+    ${responseHandling}
   }`;
 
   const importList = func.method === 'GET' ? 'useQuery' : 'useMutation';
