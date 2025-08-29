@@ -31,7 +31,7 @@ function generateColumnSQL(column: ColumnSpec): string {
  */
 export function generateCreateFunctionSQL(func: FunctionSpec): string {
   const paramList = func.params
-    .map(p => `_${p.name} ${mapTypeToSQL(p.type)}`)
+    .map(p => `_${p.name} ${mapTypeToSQL(p.type, p.schema)}`)
     .join(', ');
   const returnType = func.responseBodyType ? mapTypeToSQL(func.responseBodyType) : 'VOID';
 
@@ -114,9 +114,25 @@ function generateFunctionBodySQL(func: FunctionSpec, tableName: string): string 
 }
 
 /**
- * Maps basic types to SQL equivalents.
+ * Maps basic types (and arrays) to SQL equivalents.
  */
-function mapTypeToSQL(type: string): string {
+function mapTypeToSQL(type: string, schema?: any): string {
+  if (type === 'array') {
+    const itemSchema = schema?.items;
+    if (itemSchema) {
+      const itemType = itemSchema.type
+        ? mapTypeToSQL(itemSchema.type, itemSchema)
+        : 'TEXT';
+      return `${itemType}[]`;
+    }
+    return 'TEXT[]';
+  }
+
+  if (type.endsWith('[]')) {
+    const baseType = type.slice(0, -2);
+    return `${mapTypeToSQL(baseType)}[]`;
+  }
+
   switch (type) {
     case 'string':
       return 'VARCHAR';
@@ -126,8 +142,6 @@ function mapTypeToSQL(type: string): string {
       return 'BOOLEAN';
     case 'number':
       return 'FLOAT';
-    case 'array':
-      return 'TEXT[]'; // Simplification for now
     default:
       return 'TEXT';
   }

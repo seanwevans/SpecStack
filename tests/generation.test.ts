@@ -45,6 +45,30 @@ describe('generation functions', () => {
     responseBodyType: 'Pet[]',
   };
 
+  const funcWithArrayParams: FunctionSpec = {
+    name: 'filterPets',
+    method: 'GET',
+    path: '/pets/filter',
+    params: [
+      {
+        name: 'ids',
+        in: 'query',
+        required: false,
+        type: 'array',
+        schema: { type: 'array', items: { type: 'integer' } },
+      },
+      {
+        name: 'flags',
+        in: 'query',
+        required: false,
+        type: 'array',
+        schema: { type: 'array', items: { type: 'boolean' } },
+      },
+    ],
+    requestBodyType: undefined,
+    responseBodyType: 'Pet[]',
+  };
+
   const updateFunc: FunctionSpec = {
     name: 'updatePet',
     method: 'PUT',
@@ -176,6 +200,12 @@ describe('generation functions', () => {
     const sql = generateCreateFunctionSQL(patchFuncNoParams);
     expect(sql).toContain('UPDATE Pet SET -- no columns to update WHERE id = _id');
     expect(sql).toContain('RETURNING *');
+  });
+
+  test('generateCreateFunctionSQL with array params', () => {
+    const sql = generateCreateFunctionSQL(funcWithArrayParams);
+    expect(sql).toMatch(/_ids INTEGER\[]/);
+    expect(sql).toMatch(/_flags BOOLEAN\[]/);
   });
 
   test('generateCreateFunctionSQL for DELETE', () => {

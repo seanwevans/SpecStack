@@ -18,6 +18,8 @@ export interface ColumnSpec {
   type: string;   // e.g., "varchar", "integer"
   nullable: boolean;
   primaryKey?: boolean;
+  // Original schema object for advanced typing (e.g., arrays)
+  schema?: any;
 }
 
 // Represents a database function (or API operation)

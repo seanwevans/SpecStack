@@ -99,9 +99,64 @@ describe('parseOpenAPI with complex schemas', () => {
         name: 'Complex',
         columns: [
           { name: 'id', type: 'INTEGER', nullable: false, primaryKey: true },
-          { name: 'tags', type: 'VARCHAR[]', nullable: true, primaryKey: false },
+          {
+            name: 'tags',
+            type: 'VARCHAR[]',
+            nullable: true,
+            primaryKey: false,
+            schema: { type: 'array', items: { type: 'string' } },
+          },
           { name: 'attributes', type: 'JSONB', nullable: true, primaryKey: false },
-          { name: 'nested', type: 'JSONB[]', nullable: true, primaryKey: false },
+          {
+            name: 'nested',
+            type: 'JSONB[]',
+            nullable: true,
+            primaryKey: false,
+            schema: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string' },
+                  count: { type: 'integer' },
+                },
+              },
+            },
+          },
+        ],
+      },
+    ]);
+  });
+});
+
+describe('parseOpenAPI with array item types', () => {
+  const specPath = path.join(__dirname, 'array-items.yaml');
+  let spec: SpecIR;
+
+  beforeAll(async () => {
+    spec = await parseOpenAPI(specPath);
+  });
+
+  test('parses arrays of primitives correctly', () => {
+    expect(spec.tables).toEqual([
+      {
+        name: 'ArrayExample',
+        columns: [
+          { name: 'id', type: 'INTEGER', nullable: false, primaryKey: true },
+          {
+            name: 'numbers',
+            type: 'INTEGER[]',
+            nullable: true,
+            primaryKey: false,
+            schema: { type: 'array', items: { type: 'integer' } },
+          },
+          {
+            name: 'flags',
+            type: 'BOOLEAN[]',
+            nullable: true,
+            primaryKey: false,
+            schema: { type: 'array', items: { type: 'boolean' } },
+          },
         ],
       },
     ]);
