@@ -46,7 +46,7 @@ export async function parseOpenAPI(filePath: string): Promise<SpecIR> {
   // --- Parse Paths into functions ---
   if (openapiDoc.paths) {
     for (const [pathKey, pathItem] of Object.entries(openapiDoc.paths as Record<string, OpenAPIV3.PathItemObject>)) {
-      for (const method of ['get', 'post', 'put', 'patch', 'delete'] as const) {
+      for (const method of ['get', 'post', 'put', 'patch', 'delete', 'head', 'options', 'trace'] as const) {
         const operation = pathItem[method];
         if (operation) {
           const func = parseOperationToFunction(

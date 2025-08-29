@@ -115,6 +115,7 @@ function generateFunctionBodySQL(func: FunctionSpec, tableName: string): string 
     }
     case 'HEAD':
     case 'OPTIONS':
+    case 'TRACE':
     default:
       return `-- Unsupported HTTP method: ${func.method}`;
   }
