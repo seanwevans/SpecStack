@@ -5,6 +5,7 @@ import { readFile, access } from 'fs/promises';
 import yaml from 'js-yaml';
 import path from 'path';
 import { OpenAPIV3 } from 'openapi-types';
+import { capitalize } from '../utils/string.js';
 
 /**
  * Parses an OpenAPI YAML or JSON file into a SpecIR intermediate model.
@@ -45,7 +46,7 @@ export async function parseOpenAPI(filePath: string): Promise<SpecIR> {
   // --- Parse Paths into functions ---
   if (openapiDoc.paths) {
     for (const [pathKey, pathItem] of Object.entries(openapiDoc.paths as Record<string, OpenAPIV3.PathItemObject>)) {
-      for (const method of ['get', 'post', 'put', 'patch', 'delete'] as const) {
+      for (const method of ['get', 'post', 'put', 'patch', 'delete', 'head', 'options', 'trace'] as const) {
         const operation = pathItem[method];
         if (operation) {
           const func = parseOperationToFunction(
@@ -251,11 +252,4 @@ function mapSchemaTypeToTSType(type: string): string {
 function generateFunctionName(method: string, pathStr: string): string {
   const parts = pathStr.split('/').filter(Boolean);
   return method.toLowerCase() + parts.map(capitalize).join('');
-}
-
-/**
- * Capitalizes the first letter of a string.
- */
-function capitalize(s: string): string {
-  return s.charAt(0).toUpperCase() + s.slice(1);
 }

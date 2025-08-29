@@ -1,6 +1,7 @@
 // transformer/frontend_transformer.ts
 
 import { FunctionSpec } from '../types/specir.js';
+import { capitalize } from '../utils/string.js';
 
 /**
  * Generates a React Query hook for a given API function.
@@ -21,8 +22,9 @@ export function generateUseHook(func: FunctionSpec): string {
 
   const urlPath = buildUrlTemplate(func.path, urlParams);
 
-    const queryFn = func.method === 'GET'
-    ? `async () => {
+  const queryFn =
+    func.method === 'GET'
+      ? `async () => {
     const queryParamsObj = ${queryParams.length > 0
       ? `Object.fromEntries(Object.entries({ ${queryParams
           .map(p => `${p.name}: params.${p.name}`)
@@ -30,15 +32,13 @@ export function generateUseHook(func: FunctionSpec): string {
       : '{}'};
     const query = new URLSearchParams(queryParamsObj).toString();
     const response = await fetch(\`${urlPath}\${query ? '?' + query : ''}\`);
-    return response.json();
+    ${responseHandling}
   }`
-    : `async () => {
+      : `async (${needsParams ? 'params' : ''}) => {
     const response = await fetch(\`${urlPath}\`, {
-      method: '${func.method}',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(params.body)
+      method: '${func.method}'${func.requestBodyType ? `,\n      headers: { 'Content-Type': 'application/json' },\n      body: JSON.stringify(params.body)` : ''}
     });
-    return response.json();
+    ${responseHandling}
   }`;
 
   const importList = func.method === 'GET' ? 'useQuery' : 'useMutation';
@@ -127,11 +127,4 @@ function mapTypeToTS(schema: any): string {
 
 function extractRefName(ref: string): string {
   return ref.substring(ref.lastIndexOf('/') + 1);
-}
-
-/**
- * Capitalizes the first letter of a string.
- */
-function capitalize(s: string): string {
-  return s.charAt(0).toUpperCase() + s.slice(1);
 }

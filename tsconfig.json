@@ -17,6 +17,7 @@
     "parser",
     "transformer",
     "generator",
-    "types"
+    "types",
+    "utils"
   ]
 }
