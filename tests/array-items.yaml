@@ -1,0 +1,21 @@
+openapi: 3.0.0
+info:
+  title: Array Items
+  version: "1.0"
+components:
+  schemas:
+    ArrayExample:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+        numbers:
+          type: array
+          items:
+            type: integer
+        flags:
+          type: array
+          items:
+            type: boolean

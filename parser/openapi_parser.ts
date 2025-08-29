@@ -78,7 +78,8 @@ function parseSchemaToTable(name: string, schema: OpenAPIV3.SchemaObject): Table
       name: propName,
       type: mapOpenAPITypeToSQLType(propSchema),
       nullable: !requiredFields.includes(propName),
-      primaryKey: propName === 'id' // simple heuristic
+      primaryKey: propName === 'id', // simple heuristic
+      schema: propSchema.type === 'array' ? propSchema : undefined
     });
   }
 
