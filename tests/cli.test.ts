@@ -15,6 +15,7 @@ describe('cli generate', () => {
 
       const dbDir = path.join(tmpDir, 'db');
       const hooksDir = path.join(tmpDir, 'frontend', 'src', 'hooks');
+      const frontendSrcDir = path.join(tmpDir, 'frontend', 'src');
 
       expect(fs.existsSync(path.join(dbDir, 'Pet_table.sql'))).toBe(true);
       expect(fs.existsSync(path.join(dbDir, 'getPetById_function.sql'))).toBe(true);
@@ -23,6 +24,7 @@ describe('cli generate', () => {
       expect(fs.existsSync(path.join(hooksDir, 'useGetPetById.ts'))).toBe(true);
       expect(fs.existsSync(path.join(hooksDir, 'useCreatePet.ts'))).toBe(true);
       expect(fs.existsSync(path.join(hooksDir, 'index.ts'))).toBe(true);
+      expect(fs.existsSync(path.join(frontendSrcDir, 'types.ts'))).toBe(true);
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }

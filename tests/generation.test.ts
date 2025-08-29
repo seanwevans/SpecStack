@@ -1,6 +1,7 @@
 import { generateCreateTableSQL, generateCreateFunctionSQL } from '../transformer/db_transformer';
 import { generateUseHook } from '../transformer/frontend_transformer';
-import { TableSpec, FunctionSpec } from '../types/specir';
+import { generateTypes } from '../generator/type_writer';
+import { TableSpec, FunctionSpec, SpecIR } from '../types/specir';
 
 describe('generation functions', () => {
   const table: TableSpec = {
@@ -243,6 +244,15 @@ describe('generation functions', () => {
     expect(hook).toContain('body: Pet');
   });
 
+
+  test('generateTypes produces interfaces', () => {
+    const spec: SpecIR = { tables: [table], functions: [] };
+    const output = generateTypes(spec);
+    expect(output).toContain('export interface Pet');
+    expect(output).toContain('id: number;');
+    expect(output).toContain('name: string;');
+    expect(output).toContain('tag?: string;');
+
   test('generateUseHook without response body', () => {
     const hook = generateUseHook(deleteFunc);
     expect(hook).toContain("import { useMutation } from '@tanstack/react-query';");
@@ -250,5 +260,6 @@ describe('generation functions', () => {
     expect(hook).toContain("throw new Error('Network response was not ok')");
     expect(hook).toContain('return undefined;');
     expect(hook).not.toContain('response.json()');
+
   });
 });
