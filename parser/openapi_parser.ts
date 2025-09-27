@@ -126,6 +126,10 @@ function parseOperationToFunction(
       } else {
         requestBodyType = 'any[]';
       }
+    } else if (reqSchema.type) {
+      requestBodyType = mapSchemaTypeToTSType(reqSchema.type);
+    } else {
+      requestBodyType = 'any';
     }
   }
 
@@ -152,6 +156,12 @@ function parseOperationToFunction(
           } else {
             responseBodyType = 'any[]';
           }
+          break;
+        } else if (schema.type) {
+          responseBodyType = mapSchemaTypeToTSType(schema.type);
+          break;
+        } else {
+          responseBodyType = 'any';
           break;
         }
       }
@@ -241,6 +251,8 @@ function mapSchemaTypeToTSType(type: string): string {
       return 'number';
     case 'boolean':
       return 'boolean';
+    case 'object':
+      return 'Record<string, any>';
     default:
       return 'any';
   }

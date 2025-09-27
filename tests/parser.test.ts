@@ -90,6 +90,15 @@ describe('parseOpenAPI', () => {
       requestBodyType: undefined,
       responseBodyType: undefined,
     });
+
+    expect(spec.functions).toContainEqual({
+      name: 'postInlineSample',
+      method: 'POST',
+      path: '/inline-sample',
+      params: [],
+      requestBodyType: 'Record<string, any>',
+      responseBodyType: 'string',
+    });
   });
 
   test('throws a clear error when file is missing', async () => {
