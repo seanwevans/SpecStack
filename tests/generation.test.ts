@@ -282,6 +282,7 @@ describe('generation functions', () => {
     expect(output).toContain('id: number;');
     expect(output).toContain('name: string;');
     expect(output).toContain('tag?: string;');
+  });
 
   test('generateUseHook without response body', () => {
     const hook = generateUseHook(deleteFunc);
