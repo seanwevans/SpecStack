@@ -172,6 +172,14 @@ describe('generation functions', () => {
     expect(sql).toMatch(/getPetById\(_id INTEGER\)/);
   });
 
+  test('generateCreateFunctionSQL maps non-primitive return types to JSONB', () => {
+    const sql = generateCreateFunctionSQL(func);
+    expect(sql).toContain('RETURNS JSONB');
+
+    const arraySql = generateCreateFunctionSQL(funcWithQuery);
+    expect(arraySql).toContain('RETURNS JSONB[]');
+  });
+
   test('generateCreateFunctionSQL for POST', () => {
     const sql = generateCreateFunctionSQL(createFunc);
     expect(sql).toContain('INSERT INTO Pet (id, name) VALUES (_id, _name)');
@@ -282,6 +290,7 @@ describe('generation functions', () => {
     expect(output).toContain('id: number;');
     expect(output).toContain('name: string;');
     expect(output).toContain('tag?: string;');
+  });
 
   test('generateUseHook without response body', () => {
     const hook = generateUseHook(deleteFunc);

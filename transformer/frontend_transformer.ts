@@ -22,6 +22,16 @@ export function generateUseHook(func: FunctionSpec): string {
 
   const urlPath = buildUrlTemplate(func.path, urlParams);
 
+  const responseHandling = func.responseBodyType
+    ? `if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return response.json();`
+    : `if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return undefined;`;
+
   const queryFn =
     func.method === 'GET'
       ? `async () => {
