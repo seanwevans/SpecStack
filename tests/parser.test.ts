@@ -202,3 +202,37 @@ describe('parseOpenAPI with referenced parameters', () => {
     });
   });
 });
+
+describe('parseOpenAPI with path-level parameters', () => {
+  const specPath = path.join(__dirname, 'path-params.yaml');
+  let spec: SpecIR;
+
+  beforeAll(async () => {
+    spec = await parseOpenAPI(specPath);
+  });
+
+  test('merges path parameters into each operation', () => {
+    expect(spec.functions).toContainEqual({
+      name: 'getWidget',
+      method: 'GET',
+      path: '/widgets/{widgetId}',
+      params: [
+        { name: 'widgetId', in: 'path', required: true, type: 'string' },
+      ],
+      requestBodyType: undefined,
+      responseBodyType: undefined,
+    });
+
+    expect(spec.functions).toContainEqual({
+      name: 'updateWidget',
+      method: 'POST',
+      path: '/widgets/{widgetId}',
+      params: [
+        { name: 'widgetId', in: 'path', required: true, type: 'string' },
+        { name: 'verbose', in: 'query', required: false, type: 'boolean' },
+      ],
+      requestBodyType: undefined,
+      responseBodyType: undefined,
+    });
+  });
+});
