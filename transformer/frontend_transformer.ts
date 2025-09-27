@@ -14,13 +14,29 @@ export function generateUseHook(func: FunctionSpec): string {
 
   const needsParams = urlParams.length > 0 || queryParams.length > 0 || func.requestBodyType;
 
-  const paramsInterface = needsParams ? `params: {
-    ${urlParams.map(p => `${p.name}: ${mapTypeToTS(p.schema || p.type)}`).join(';\n    ')}
-    ${queryParams.map(p => `${p.name}?: ${mapTypeToTS(p.schema || p.type)}`).join(';\n    ')}
-    ${func.requestBodyType ? `body: ${func.requestBodyType}` : ''}
-  }` : '';
+  const paramsFields: string[] = [];
+  paramsFields.push(
+    ...urlParams.map(p => `${p.name}: ${mapTypeToTS(p.schema || p.type)}`),
+  );
+  paramsFields.push(
+    ...queryParams.map(p => `${p.name}?: ${mapTypeToTS(p.schema || p.type)}`),
+  );
+  if (func.requestBodyType) {
+    paramsFields.push(`body: ${func.requestBodyType}`);
+  }
+
+  const paramsInterface = needsParams
+    ? `params: {\n    ${paramsFields.join(';\n    ')}\n  }`
+    : '';
 
   const urlPath = buildUrlTemplate(func.path, urlParams);
+
+  const queryKeyParts = [
+    `'${queryKey}'`,
+    ...urlParams.map(p => `params.${p.name}`),
+    ...queryParams.map(p => `params.${p.name}`),
+  ];
+  const queryKeyArray = `[${queryKeyParts.join(', ')}]`;
 
   const responseHandling = func.responseBodyType
     ? `if (!response.ok) {
@@ -73,7 +89,7 @@ ${imports}
 export function ${hookName}(${needsParams ? paramsInterface : ''}) {
   return ${
     func.method === 'GET'
-      ? `useQuery<${func.responseBodyType || 'any'}>({ queryKey: ['${queryKey}'], queryFn: ${queryFn} })`
+      ? `useQuery<${func.responseBodyType || 'any'}>({ queryKey: ${queryKeyArray}, queryFn: ${queryFn} })`
       : `useMutation<${func.responseBodyType || 'any'}>({ mutationFn: ${queryFn} })`
   };
 }

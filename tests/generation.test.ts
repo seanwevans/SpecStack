@@ -236,7 +236,7 @@ describe('generation functions', () => {
     expect(hook).toContain("import type { Pet } from '../types';");
     expect(hook).not.toContain('useMutation');
     expect(hook).toContain('useGetPetById');
-    expect(hook).toContain("useQuery<Pet>({ queryKey: ['getPetById']");
+    expect(hook).toContain("useQuery<Pet>({ queryKey: ['getPetById', params.id]");
     expect(hook).toContain("fetch(`/pets/${encodeURIComponent(params.id)}${query ? '?' + query : ''}`);");
     expect(hook).toContain('if (!response.ok)');
     expect(hook).toContain("throw new Error('Network response was not ok')");
@@ -257,6 +257,7 @@ describe('generation functions', () => {
 
   test('generateUseHook with query params', () => {
     const hook = generateUseHook(funcWithQuery);
+    expect(hook).toContain("queryKey: ['searchPets', params.tag, params.limit]");
     expect(hook).toContain('const queryParamsObj = Object.fromEntries(Object.entries({ tag: params.tag, limit: params.limit }).filter(([_, v]) => v !== undefined));');
     expect(hook).toContain('const query = new URLSearchParams(queryParamsObj).toString();');
     expect(hook).toContain("fetch(`/pets${query ? '?' + query : ''}`)");
