@@ -151,6 +151,9 @@ function mapTypeToSQL(type: string, schema?: any): string {
     case 'number':
       return 'FLOAT';
     default:
+      if (/^[A-Z]/.test(type)) {
+        return 'JSONB';
+      }
       return 'TEXT';
   }
 }

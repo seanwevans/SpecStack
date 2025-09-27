@@ -1,0 +1,36 @@
+openapi: 3.0.0
+info:
+  title: Path Params API
+  version: 1.0.0
+paths:
+  /widgets/{widgetId}:
+    parameters:
+      - $ref: '#/components/parameters/WidgetId'
+    get:
+      operationId: getWidget
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+    post:
+      operationId: updateWidget
+      parameters:
+        - name: verbose
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        '204':
+          description: No Content
+components:
+  parameters:
+    WidgetId:
+      name: widgetId
+      in: path
+      required: true
+      schema:
+        type: string
