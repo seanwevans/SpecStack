@@ -46,13 +46,19 @@ export async function parseOpenAPI(filePath: string): Promise<SpecIR> {
   // --- Parse Paths into functions ---
   if (openapiDoc.paths) {
     for (const [pathKey, pathItem] of Object.entries(openapiDoc.paths as Record<string, OpenAPIV3.PathItemObject>)) {
+      const pathParameters = pathItem.parameters as (OpenAPIV3.ParameterObject | OpenAPIV3.ReferenceObject)[] | undefined;
+
       for (const method of ['get', 'post', 'put', 'patch', 'delete', 'head', 'options', 'trace'] as const) {
         const operation = pathItem[method];
         if (operation) {
+          const mergedParameters = mergePathAndOperationParameters(
+            pathParameters,
+            operation.parameters as (OpenAPIV3.ParameterObject | OpenAPIV3.ReferenceObject)[] | undefined
+          );
           const func = parseOperationToFunction(
             method.toUpperCase(),
             pathKey,
-            operation,
+            { ...operation, parameters: mergedParameters },
             openapiDoc.components?.parameters
           );
           functions.push(func);
@@ -97,16 +103,30 @@ function parseOperationToFunction(
 ): FunctionSpec {
   const params: ParamSpec[] = [];
 
+  const seenParams = new Map<string, number>();
+
   if (operation.parameters) {
     for (const param of operation.parameters as (OpenAPIV3.ParameterObject | OpenAPIV3.ReferenceObject)[]) {
+      let resolvedParam: OpenAPIV3.ParameterObject | undefined;
       if ('$ref' in param) {
-        const resolved = resolveParameterRef(param.$ref, globalParams);
-        if (resolved) {
-          params.push(parameterObjectToParamSpec(resolved));
-        }
+        resolvedParam = resolveParameterRef(param.$ref, globalParams);
+      } else {
+        resolvedParam = param;
+      }
+
+      if (!resolvedParam) {
         continue;
       }
-      params.push(parameterObjectToParamSpec(param));
+
+      const paramSpec = parameterObjectToParamSpec(resolvedParam);
+      const paramKey = `${resolvedParam.in}:${resolvedParam.name}`;
+
+      if (seenParams.has(paramKey)) {
+        params[seenParams.get(paramKey)!] = paramSpec;
+      } else {
+        seenParams.set(paramKey, params.length);
+        params.push(paramSpec);
+      }
     }
   }
 
@@ -176,6 +196,18 @@ function parseOperationToFunction(
     requestBodyType,
     responseBodyType
   };
+}
+
+function mergePathAndOperationParameters(
+  pathParams: (OpenAPIV3.ParameterObject | OpenAPIV3.ReferenceObject)[] | undefined,
+  operationParams: (OpenAPIV3.ParameterObject | OpenAPIV3.ReferenceObject)[] | undefined
+): (OpenAPIV3.ParameterObject | OpenAPIV3.ReferenceObject)[] | undefined {
+  const merged = [
+    ...(pathParams ?? []),
+    ...(operationParams ?? [])
+  ];
+
+  return merged.length > 0 ? merged : undefined;
 }
 
 function parameterObjectToParamSpec(param: OpenAPIV3.ParameterObject): ParamSpec {
