@@ -62,6 +62,72 @@ import { useGetPetById } from '../generated/frontend/src/hooks';
 | Write | Files saved to `generated/` automatically |
 | Index | Frontend hooks auto-reexported |
 
+### 📊 Visualization: OpenAPI ➔ SpecIR ➔ SQL ➔ Hooks
+
+```mermaid
+flowchart LR
+    A[OpenAPI Spec<br/>petstore.yaml] --> B[Parse<br/>TypeScript SpecIR]
+    B --> C[Transform<br/>PostgreSQL Schema]
+    B --> D[Transform<br/>React Query Hooks]
+    C --> E[Write<br/>db/schema.sql]
+    D --> F[Index<br/>frontend/src/hooks/index.ts]
+```
+
+| Stage | Sample Output |
+|:------|:--------------|
+| **Parse** | ```yaml
+openapi: 3.0.3
+paths:
+  /pets:
+    get:
+      operationId: listPets
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'
+components:
+  schemas:
+    Pet:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        tag:
+          type: string
+``` |
+| **Transform → SpecIR** | ```ts
+const petEntity = specIR.entities.create({
+  name: 'Pet',
+  primaryKey: ['id'],
+  fields: [
+    { name: 'id', type: 'integer', nullable: false },
+    { name: 'name', type: 'string', nullable: false },
+    { name: 'tag', type: 'string', nullable: true },
+  ],
+});
+``` |
+| **Transform → PostgreSQL** | ```sql
+CREATE TABLE IF NOT EXISTS pet (
+  id INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  tag TEXT,
+  PRIMARY KEY (id)
+);
+``` |
+| **Transform → React Hooks** | ```ts
+export const useListPets = () =>
+  useQuery({
+    queryKey: ['listPets'],
+    queryFn: () => client.get('/pets'),
+  });
+``` |
+| **Write & Index** | Generated SQL is written to `generated/db/schema.sql` and hooks are re-exported from `generated/frontend/src/hooks/index.ts`. |
+
 ---
 
 ## 📄 Example Outputs
