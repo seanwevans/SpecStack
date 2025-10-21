@@ -1,4 +1,5 @@
 # SpecStack
+<img width="256" alt="Mid-Century Modern Row Houses" src="https://github.com/user-attachments/assets/0575cdf9-f6c5-490d-ab47-a7319e604020" />
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/Built%20With-TypeScript-3178c6.svg)](https://www.typescriptlang.org/)
