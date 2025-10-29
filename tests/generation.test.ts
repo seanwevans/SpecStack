@@ -178,37 +178,42 @@ describe('generation functions', () => {
 
     const arraySql = generateCreateFunctionSQL(funcWithQuery);
     expect(arraySql).toContain('RETURNS JSONB[]');
+    expect(arraySql).not.toMatch(/tag = _tag/);
+    expect(arraySql).not.toMatch(/limit = _limit/);
   });
 
   test('generateCreateFunctionSQL for POST', () => {
     const sql = generateCreateFunctionSQL(createFunc);
-    expect(sql).toContain('INSERT INTO Pet (id, name) VALUES (_id, _name)');
+    expect(sql).toContain('INSERT INTO Pet DEFAULT VALUES RETURNING *');
+    expect(sql).toContain('TODO: Map fields from Pet request body to INSERT columns');
+    expect(sql).not.toContain('INSERT INTO Pet (id, name)');
     expect(sql).toMatch(/createPet\(_id INTEGER, _name VARCHAR\)/);
-    expect(sql).toContain('RETURNING *');
   });
 
   test('generateCreateFunctionSQL for PUT', () => {
     const sql = generateCreateFunctionSQL(updateFunc);
-    expect(sql).toContain('UPDATE Pet SET name = _name WHERE id = _id');
-    expect(sql).toContain('RETURNING *');
+    expect(sql).toContain('TODO: Map fields from Pet request body to UPDATE columns');
+    expect(sql).toContain('-- Path filter: WHERE id = _id RETURNING *;');
+    expect(sql).not.toContain('name = _name');
   });
 
   test('generateCreateFunctionSQL for PATCH', () => {
     const sql = generateCreateFunctionSQL(patchFunc);
-    expect(sql).toContain('UPDATE Pet SET tag = _tag WHERE id = _id');
-    expect(sql).toContain('RETURNING *');
+    expect(sql).toContain('TODO: Map fields from Pet request body to UPDATE columns');
+    expect(sql).toContain('-- Path filter: WHERE id = _id RETURNING *;');
+    expect(sql).not.toContain('tag = _tag');
   });
 
   test('generateCreateFunctionSQL for PUT with only id param', () => {
     const sql = generateCreateFunctionSQL(updateFuncNoParams);
-    expect(sql).toContain('-- Warning: no columns provided to update');
-    expect(sql).not.toContain('RETURNING *');
+    expect(sql).toContain('TODO: Map fields from Pet request body to UPDATE columns');
+    expect(sql).toContain('-- Path filter: WHERE id = _id RETURNING *;');
   });
 
   test('generateCreateFunctionSQL for PATCH with only id param', () => {
     const sql = generateCreateFunctionSQL(patchFuncNoParams);
-    expect(sql).toContain('-- Warning: no columns provided to update');
-    expect(sql).not.toContain('RETURNING *');
+    expect(sql).toContain('TODO: Map fields from Pet request body to UPDATE columns');
+    expect(sql).toContain('-- Path filter: WHERE id = _id RETURNING *;');
   });
 
   test('generateCreateFunctionSQL with array params', () => {
@@ -287,6 +292,13 @@ describe('generation functions', () => {
     const hook = generateUseHook(createFunc);
     expect(hook).toContain("import type { Pet } from '../types';");
     expect(hook).toContain('body: Pet');
+  });
+
+  test('generateUseHook mutation includes query params in fetch url', () => {
+    const hook = generateUseHook(createFunc);
+    expect(hook).toContain('const queryParamsObj = Object.fromEntries(Object.entries({ id: params.id, name: params.name }).filter(([_, v]) => v !== undefined));');
+    expect(hook).toContain('const query = new URLSearchParams(queryParamsObj).toString();');
+    expect(hook).toContain("fetch(`/pets${query ? '?' + query : ''}`, {");
   });
 
 

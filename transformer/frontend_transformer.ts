@@ -1,13 +1,13 @@
 // transformer/frontend_transformer.ts
 
 import { FunctionSpec } from '../types/specir.js';
-import { capitalize } from '../utils/string.js';
+import { toPascalCase } from '../utils/string.js';
 
 /**
  * Generates a React Query hook for a given API function.
  */
 export function generateUseHook(func: FunctionSpec): string {
-  const hookName = `use${capitalize(func.name)}`;
+  const hookName = `use${toPascalCase(func.name)}`;
   const queryKey = func.name;
   const urlParams = func.params.filter(p => p.in === 'path');
   const queryParams = func.params.filter(p => p.in === 'query');
@@ -57,6 +57,13 @@ export function generateUseHook(func: FunctionSpec): string {
     }
     return undefined;`;
 
+  const queryParamsObjSnippet = `Object.fromEntries(Object.entries({ ${queryParams
+    .map(p => `${p.name}: params.${p.name}`)
+    .join(', ')} }).filter(([_, v]) => v !== undefined))`;
+
+  const queryParamsDeclaration = `const queryParamsObj = ${queryParams.length > 0 ? queryParamsObjSnippet : '{}'};
+    const query = new URLSearchParams(queryParamsObj).toString();`;
+
   const queryFn =
     func.method === 'GET'
       ? `async () => {
@@ -70,7 +77,8 @@ export function generateUseHook(func: FunctionSpec): string {
     ${responseHandling}
   }`
       : `async (${needsParams ? 'params' : ''}) => {
-    const response = await fetch(\`${urlPath}\`, {
+    ${queryParamsDeclaration}
+    const response = await fetch(\`${urlPath}\${query ? '?' + query : ''}\`, {
       method: '${func.method}'${func.requestBodyType ? `,\n      headers: { 'Content-Type': 'application/json' },\n      body: JSON.stringify(params.body)` : ''}
     });
     ${responseHandling}
