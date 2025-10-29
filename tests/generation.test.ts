@@ -262,8 +262,8 @@ describe('generation functions', () => {
 
   test('generateUseHook with query params', () => {
     const hook = generateUseHook(funcWithQuery);
-    expect(hook).toContain("queryKey: ['searchPets', params.tag, params.limit]");
-    expect(hook).toContain('const queryParamsObj = Object.fromEntries(Object.entries({ tag: params.tag, limit: params.limit }).filter(([_, v]) => v !== undefined));');
+    expect(hook).toContain("queryKey: ['searchPets', params?.tag, params?.limit]");
+    expect(hook).toContain('const queryParamsObj = Object.fromEntries(Object.entries({ tag: params?.tag, limit: params?.limit }).filter(([_, v]) => v !== undefined));');
     expect(hook).toContain('const query = new URLSearchParams(queryParamsObj).toString();');
     expect(hook).toContain("fetch(`/pets${query ? '?' + query : ''}`)");
 
@@ -274,6 +274,12 @@ describe('generation functions', () => {
     expect(buildQuery({ tag: undefined, limit: 5 })).toBe('limit=5');
     expect(buildQuery({ tag: 'cute', limit: undefined })).toBe('tag=cute');
     expect(buildQuery({ tag: undefined, limit: undefined })).toBe('');
+  });
+
+  test('generateUseHook with only optional params allows omitting arguments', () => {
+    const hook = generateUseHook(funcWithQuery);
+    expect(hook).toContain('export function useSearchPets(paramsArg?: {');
+    expect(hook).toContain('const params = paramsArg ?? ({} as {');
   });
 
   test('generateUseHook returns typed array', () => {
