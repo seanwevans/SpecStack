@@ -30,6 +30,7 @@ export interface FunctionSpec {
   params: ParamSpec[];         // URL parameters, query parameters, etc.
   requestBodyType?: string;    // For POST/PUT/PATCH
   responseBodyType?: string;   // Type returned on success
+  entityName?: string;         // Preferred entity/table identifier inferred from the spec
 }
 
 // Represents a single parameter
