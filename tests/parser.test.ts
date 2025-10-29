@@ -229,7 +229,7 @@ describe('parseOpenAPI with path-level parameters', () => {
         { name: 'widgetId', in: 'path', required: true, type: 'string' },
       ],
       requestBodyType: undefined,
-      responseBodyType: undefined,
+      responseBodyType: 'Record<string, any>',
     });
 
     expect(spec.functions).toContainEqual({
@@ -243,5 +243,40 @@ describe('parseOpenAPI with path-level parameters', () => {
       requestBodyType: undefined,
       responseBodyType: undefined,
     });
+  });
+});
+
+describe('parseOpenAPI generates sanitized names when operationId is missing', () => {
+  const specPath = path.join(__dirname, 'path-naming.yaml');
+  let spec: SpecIR;
+
+  beforeAll(async () => {
+    spec = await parseOpenAPI(specPath);
+  });
+
+  test('creates predictable fallback names', () => {
+    expect(spec.functions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: 'getReportsReportId',
+          method: 'GET',
+          path: '/reports/{report-id}',
+        }),
+        expect.objectContaining({
+          name: 'postSlugNameItems',
+          method: 'POST',
+          path: '/{slug-name}/items',
+        }),
+        expect.objectContaining({
+          name: 'patchDashboardsIdSubSection',
+          method: 'PATCH',
+          path: '/dashboards/{id}/sub-section',
+        }),
+      ])
+    );
+
+    for (const func of spec.functions) {
+      expect(func.name).toMatch(/^[A-Za-z_]\w*$/);
+    }
   });
 });

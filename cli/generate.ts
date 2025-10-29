@@ -6,7 +6,7 @@ import { generateUseHook } from '../transformer/frontend_transformer.js';
 import { writeToFile } from '../generator/file_writer.js';
 import { generateTypes } from '../generator/type_writer.js';
 import { join } from 'path';
-import { capitalize } from '../utils/string.js';
+import { toPascalCase } from '../utils/string.js';
 
 const args = process.argv.slice(2);
 
@@ -63,7 +63,7 @@ async function main(): Promise<void> {
     const hookWrites: Promise<void>[] = [];
 
     for (const func of spec.functions) {
-      const hookName = `use${capitalize(func.name)}`;
+      const hookName = `use${toPascalCase(func.name)}`;
       const hook = generateUseHook(func);
       const filePath = join(frontendOut, `${hookName}.ts`);
       hookFiles.push(hookName);
