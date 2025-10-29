@@ -1,6 +1,7 @@
 // transformer/db_transformer.ts
 
 import { TableSpec, FunctionSpec, ColumnSpec } from '../types/specir.js';
+import { capitalize, sanitizeIdentifier } from '../utils/string.js';
 
 /**
  * Generates a full CREATE TABLE SQL statement from a TableSpec.
@@ -51,11 +52,52 @@ $$;`.trim();
  * Determine table name from the function specification.
  */
 function getTableNameFromFunc(func: FunctionSpec): string {
-  const typeName = func.method === 'GET' ? func.responseBodyType : func.requestBodyType;
-  if (typeName) {
-    return typeName.replace(/\[\]$/, '');
+  const entityCandidate = sanitizeIdentifier(func.entityName);
+  if (entityCandidate) {
+    return entityCandidate;
   }
-  return func.name;
+
+  const typeName = func.method === 'GET' ? func.responseBodyType : func.requestBodyType;
+  const baseType = typeName?.replace(/\[\]$/, '');
+  if (baseType && /^[A-Za-z_][A-Za-z0-9_]*$/.test(baseType)) {
+    const sanitized = sanitizeIdentifier(baseType);
+    if (sanitized) {
+      return sanitized;
+    }
+  }
+
+  const pathDerived = deriveTableNameFromPath(func.path);
+  if (pathDerived) {
+    return pathDerived;
+  }
+
+  const sanitizedType = sanitizeIdentifier(typeName);
+  if (sanitizedType) {
+    return sanitizedType;
+  }
+
+  const fallback = sanitizeIdentifier(func.name);
+  return fallback || 'anonymous_table';
+}
+
+function deriveTableNameFromPath(path: string): string | undefined {
+  const segments = path
+    .split('/')
+    .filter(Boolean)
+    .filter(segment => !segment.startsWith('{'));
+
+  if (!segments.length) {
+    return undefined;
+  }
+
+  const pascal = segments
+    .flatMap(segment => segment.split(/[^A-Za-z0-9]+/))
+    .filter(Boolean)
+    .map(capitalize)
+    .join('');
+
+  const sanitized = sanitizeIdentifier(pascal);
+  return sanitized || undefined;
 }
 
 /**

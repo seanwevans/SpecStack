@@ -5,6 +5,7 @@ import { readFile, access } from 'fs/promises';
 import yaml from 'js-yaml';
 import path from 'path';
 import { OpenAPIV3 } from 'openapi-types';
+import { capitalize, sanitizeIdentifier } from '../utils/string.js';
 import { ensureValidIdentifier, toPascalCase } from '../utils/string.js';
 
 /**
@@ -59,7 +60,8 @@ export async function parseOpenAPI(filePath: string): Promise<SpecIR> {
             method.toUpperCase(),
             pathKey,
             { ...operation, parameters: mergedParameters },
-            openapiDoc.components?.parameters
+            openapiDoc.components?.parameters,
+            tables
           );
           functions.push(func);
         }
@@ -99,7 +101,8 @@ function parseOperationToFunction(
   method: string,
   path: string,
   operation: OpenAPIV3.OperationObject,
-  globalParams?: Record<string, OpenAPIV3.ParameterObject | OpenAPIV3.ReferenceObject>
+  globalParams: Record<string, OpenAPIV3.ParameterObject | OpenAPIV3.ReferenceObject> | undefined,
+  tables: TableSpec[]
 ): FunctionSpec {
   const params: ParamSpec[] = [];
 
@@ -188,13 +191,16 @@ function parseOperationToFunction(
     }
   }
 
+  const entityName = resolveEntityName(path, requestBodyType, responseBodyType, tables);
+
   return {
     name: operation.operationId || generateFunctionName(method, path),
     method: method as HttpMethod,
     path,
     params,
     requestBodyType,
-    responseBodyType
+    responseBodyType,
+    entityName
   };
 }
 
@@ -304,4 +310,57 @@ function generateFunctionName(method: string, pathStr: string): string {
 
   const rawName = method.toLowerCase() + parts.join('');
   return ensureValidIdentifier(rawName, 'operation');
+}
+
+function resolveEntityName(
+  path: string,
+  requestBodyType: string | undefined,
+  responseBodyType: string | undefined,
+  tables: TableSpec[]
+): string | undefined {
+  const tableLookup = new Map<string, string>();
+  for (const table of tables) {
+    const sanitized = sanitizeIdentifier(table.name);
+    if (sanitized) {
+      tableLookup.set(sanitized.toLowerCase(), table.name);
+    }
+  }
+
+  const candidateTypes = [responseBodyType, requestBodyType]
+    .map(type => sanitizeIdentifier(type))
+    .filter((name): name is string => !!name);
+
+  for (const candidate of candidateTypes) {
+    const match = tableLookup.get(candidate.toLowerCase());
+    if (match) {
+      return match;
+    }
+  }
+
+  const pathDerived = deriveEntityNameFromPath(path);
+  if (pathDerived) {
+    return pathDerived;
+  }
+
+  return undefined;
+}
+
+function deriveEntityNameFromPath(path: string): string | undefined {
+  const segments = path
+    .split('/')
+    .filter(Boolean)
+    .filter(segment => !segment.startsWith('{'));
+
+  if (!segments.length) {
+    return undefined;
+  }
+
+  const pascal = segments
+    .flatMap(segment => segment.split(/[^A-Za-z0-9]+/))
+    .filter(Boolean)
+    .map(capitalize)
+    .join('');
+
+  const sanitized = sanitizeIdentifier(pascal);
+  return sanitized || undefined;
 }

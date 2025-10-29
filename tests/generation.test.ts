@@ -156,6 +156,24 @@ describe('generation functions', () => {
     responseBodyType: 'Pet',
   };
 
+  const inlineRequestFunc: FunctionSpec = {
+    name: 'createInlineReport',
+    method: 'POST',
+    path: '/reports/summary',
+    params: [],
+    requestBodyType: 'Record<string, any>',
+    responseBodyType: undefined,
+  };
+
+  const inlineResponseFunc: FunctionSpec = {
+    name: 'getInlineReport',
+    method: 'GET',
+    path: '/reports/summary',
+    params: [],
+    requestBodyType: undefined,
+    responseBodyType: 'Record<string, any>',
+  };
+
   test('generateCreateTableSQL', () => {
     const sql = generateCreateTableSQL(table);
     expect(sql).toBe(`CREATE TABLE IF NOT EXISTS Pet (
@@ -182,12 +200,24 @@ describe('generation functions', () => {
     expect(arraySql).not.toMatch(/limit = _limit/);
   });
 
+  test('generateCreateFunctionSQL falls back to sanitized path name for inline response type', () => {
+    const sql = generateCreateFunctionSQL(inlineResponseFunc);
+    expect(sql).toContain('SELECT * FROM ReportsSummary');
+    expect(sql).not.toContain('FROM Recordstringany');
+  });
+
   test('generateCreateFunctionSQL for POST', () => {
     const sql = generateCreateFunctionSQL(createFunc);
     expect(sql).toContain('INSERT INTO Pet DEFAULT VALUES RETURNING *');
     expect(sql).toContain('TODO: Map fields from Pet request body to INSERT columns');
     expect(sql).not.toContain('INSERT INTO Pet (id, name)');
     expect(sql).toMatch(/createPet\(_id INTEGER, _name VARCHAR\)/);
+  });
+
+  test('generateCreateFunctionSQL falls back to sanitized path name for inline request type', () => {
+    const sql = generateCreateFunctionSQL(inlineRequestFunc);
+    expect(sql).toContain('INSERT INTO ReportsSummary');
+    expect(sql).not.toContain('INSERT INTO Recordstringany');
   });
 
   test('generateCreateFunctionSQL for PUT', () => {
