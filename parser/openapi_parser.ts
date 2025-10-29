@@ -5,7 +5,7 @@ import { readFile, access } from 'fs/promises';
 import yaml from 'js-yaml';
 import path from 'path';
 import { OpenAPIV3 } from 'openapi-types';
-import { capitalize } from '../utils/string.js';
+import { ensureValidIdentifier, toPascalCase } from '../utils/string.js';
 
 /**
  * Parses an OpenAPI YAML or JSON file into a SpecIR intermediate model.
@@ -295,6 +295,13 @@ function mapSchemaTypeToTSType(type: string): string {
  * e.g., "GET /pets" -> "getPets"
  */
 function generateFunctionName(method: string, pathStr: string): string {
-  const parts = pathStr.split('/').filter(Boolean);
-  return method.toLowerCase() + parts.map(capitalize).join('');
+  const parts = pathStr
+    .split('/')
+    .filter(Boolean)
+    .map(segment => segment.replace(/[{}]/g, ''))
+    .map(toPascalCase)
+    .filter(Boolean);
+
+  const rawName = method.toLowerCase() + parts.join('');
+  return ensureValidIdentifier(rawName, 'operation');
 }

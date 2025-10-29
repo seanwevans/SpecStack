@@ -1,0 +1,21 @@
+openapi: 3.0.0
+info:
+  title: Path naming
+  version: 1.0.0
+paths:
+  /reports/{report-id}:
+    get:
+      responses:
+        '200':
+          description: OK
+  /{slug-name}/items:
+    post:
+      responses:
+        '201':
+          description: Created
+  /dashboards/{id}/sub-section:
+    patch:
+      responses:
+        '200':
+          description: Updated
+components: {}
