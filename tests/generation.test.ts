@@ -288,6 +288,13 @@ describe('generation functions', () => {
     expect(hook).toContain('body: Pet');
   });
 
+  test('generateUseHook mutation includes query params in fetch url', () => {
+    const hook = generateUseHook(createFunc);
+    expect(hook).toContain('const queryParamsObj = Object.fromEntries(Object.entries({ id: params.id, name: params.name }).filter(([_, v]) => v !== undefined));');
+    expect(hook).toContain('const query = new URLSearchParams(queryParamsObj).toString();');
+    expect(hook).toContain("fetch(`/pets${query ? '?' + query : ''}`, {");
+  });
+
 
   test('generateTypes produces interfaces', () => {
     const spec: SpecIR = { tables: [table], functions: [] };
