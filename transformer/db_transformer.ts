@@ -104,52 +104,63 @@ function deriveTableNameFromPath(path: string): string | undefined {
  * Generate the SQL body for the function based on method and params.
  */
 function generateFunctionBodySQL(func: FunctionSpec, tableName: string): string {
-  const paramNames = func.params.map(p => p.name);
+  const pathParams = func.params.filter(p => p.in === 'path').map(p => p.name);
+  const queryParams = func.params.filter(p => p.in === 'query').map(p => p.name);
+  const allParamNames = func.params.map(p => p.name);
   const placeholders: Record<string, string> = Object.fromEntries(
-    paramNames.map(name => [name, `_${name}`])
+    allParamNames.map(name => [name, `_${name}`])
   );
   switch (func.method) {
     case 'GET': {
-      const whereClause = paramNames.length
+      const whereClause = pathParams.length
         ?
             ' WHERE ' +
-            paramNames
+            pathParams
               .map(name => `${name} = ${placeholders[name]}`)
               .join(' AND ')
         : '';
-      return `SELECT * FROM ${tableName}${whereClause};`;
+      const baseSelect = `SELECT * FROM ${tableName}${whereClause};`;
+      if (!queryParams.length) {
+        return baseSelect;
+      }
+
+      const filterComments = queryParams
+        .map(name => `-- Optional filter: ${name}`)
+        .join('\n  ');
+
+      return `${baseSelect}\n  ${filterComments}`;
     }
     case 'POST': {
-      if (paramNames.length) {
-        const columns = paramNames.join(', ');
-        const values = paramNames.map(name => placeholders[name]).join(', ');
-        return `INSERT INTO ${tableName} (${columns}) VALUES (${values})${func.responseBodyType ? ' RETURNING *' : ''};`;
-      }
-      return `INSERT INTO ${tableName} DEFAULT VALUES${func.responseBodyType ? ' RETURNING *' : ''};`;
+      const bodyDescriptor = func.requestBodyType
+        ? `${func.requestBodyType} request body`
+        : 'request body';
+      const returningClause = func.responseBodyType ? ' RETURNING *' : '';
+      const comment = `-- TODO: Map fields from ${bodyDescriptor} to INSERT columns`;
+      return `${comment}\nINSERT INTO ${tableName} DEFAULT VALUES${returningClause};`;
     }
     case 'PUT':
     case 'PATCH': {
-      if (paramNames.length) {
-        const [idParam, ...rest] = paramNames;
-        if (rest.length === 0) {
-          const warning = `-- Warning: no columns provided to update for ${tableName}`;
-          console.warn(warning);
-          return warning;
-        }
-        const setClause = rest
-          .map(name => `${name} = ${placeholders[name]}`)
-          .join(', ');
-        return `UPDATE ${tableName} SET ${setClause} WHERE ${idParam} = ${placeholders[idParam]}${func.responseBodyType ? ' RETURNING *' : ''};`;
+      if (!pathParams.length) {
+        const warning = `-- Warning: unable to update ${tableName} without identifying path parameters`;
+        console.warn(warning);
+        return warning;
       }
-      const warning = `-- Warning: no parameters provided for ${tableName} update`;
-      console.warn(warning);
-      return warning;
+
+      const bodyDescriptor = func.requestBodyType
+        ? `${func.requestBodyType} request body`
+        : 'request body';
+      const whereClause = pathParams
+        .map(name => `${name} = ${placeholders[name]}`)
+        .join(' AND ');
+      const returningClause = func.responseBodyType ? ' RETURNING *' : '';
+      const comment = `-- TODO: Map fields from ${bodyDescriptor} to UPDATE columns`;
+      return `${comment}\n-- Path filter: WHERE ${whereClause}${returningClause};`;
     }
     case 'DELETE': {
-      const whereClause = paramNames.length
+      const whereClause = pathParams.length
         ?
             ' WHERE ' +
-            paramNames
+            pathParams
               .map(name => `${name} = ${placeholders[name]}`)
               .join(' AND ')
         : '';
