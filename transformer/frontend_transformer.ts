@@ -48,20 +48,23 @@ export function generateUseHook(func: FunctionSpec): string {
     }
     return undefined;`;
 
+  const queryParamsObjSnippet = `Object.fromEntries(Object.entries({ ${queryParams
+    .map(p => `${p.name}: params.${p.name}`)
+    .join(', ')} }).filter(([_, v]) => v !== undefined))`;
+
+  const queryParamsDeclaration = `const queryParamsObj = ${queryParams.length > 0 ? queryParamsObjSnippet : '{}'};
+    const query = new URLSearchParams(queryParamsObj).toString();`;
+
   const queryFn =
     func.method === 'GET'
       ? `async () => {
-    const queryParamsObj = ${queryParams.length > 0
-      ? `Object.fromEntries(Object.entries({ ${queryParams
-          .map(p => `${p.name}: params.${p.name}`)
-          .join(', ')} }).filter(([_, v]) => v !== undefined))`
-      : '{}'};
-    const query = new URLSearchParams(queryParamsObj).toString();
+    ${queryParamsDeclaration}
     const response = await fetch(\`${urlPath}\${query ? '?' + query : ''}\`);
     ${responseHandling}
   }`
       : `async (${needsParams ? 'params' : ''}) => {
-    const response = await fetch(\`${urlPath}\`, {
+    ${queryParamsDeclaration}
+    const response = await fetch(\`${urlPath}\${query ? '?' + query : ''}\`, {
       method: '${func.method}'${func.requestBodyType ? `,\n      headers: { 'Content-Type': 'application/json' },\n      body: JSON.stringify(params.body)` : ''}
     });
     ${responseHandling}
